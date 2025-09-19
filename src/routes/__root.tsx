@@ -1,25 +1,23 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router';
+// __root.tsx
+import { createRootRoute, Outlet } from '@tanstack/react-router';
 import { AuthProvider } from '@lib/contexts/AuthContext';
+import NotFound from '@lib/components/404/NotFound';
 
-function Root() {
-    return (
-        <AuthProvider>
-            <Outlet />
-        </AuthProvider>
-    );
-}
+const WrappedNotFound = () => (
+  <AuthProvider>
+    <NotFound />
+  </AuthProvider>
+);
 
-function ErrorComponent({ error }: { error: unknown }) {
-    return (
-        <div className="error-boundary">
-            <h1>Dojo Training Error</h1>
-            <p>An error occurred: {String(error)}</p>
-            <button onClick={() => window.location.reload()}>Retry</button>
-        </div>
-    );
-}
 
-export const Route: any = createFileRoute('/')({
-    component: Root,
-    errorComponent: ErrorComponent,
-});
+
+export const Route = createRootRoute({
+  component: () => (
+    <AuthProvider>
+      <Outlet />
+    </AuthProvider>
+  ),
+  errorComponent: WrappedNotFound,
+
+  });
+
