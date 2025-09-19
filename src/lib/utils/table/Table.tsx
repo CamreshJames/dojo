@@ -2,6 +2,7 @@ import { createContext, useState, useEffect, useCallback, useContext } from 'rea
 import type { ReactNode } from 'react';
 import './Table.css';
 
+// Icons
 export function AddIcon() {
     return (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -45,19 +46,18 @@ function TrashIcon() {
 function CancelModalIcon() {
     return (
         <svg width="18" height="18" viewBox="0 0 18 18" fill="red" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9.00008 15.6667C5.32508 15.6667 2.33341 12.675 2.33341 9.00002C2.33341 5.32502 5.32508 2.33335 9.00008 2.33335C12.6751 2.33335 15.6667 5.32502 15.6667 9.00002C15.6667 12.675 12.6751 15.6667 9.00008 15.6667ZM9.00008 0.666687C4.39175 0.666687 0.666748 4.39169 0.666748 9.00002C0.666748 13.6084 4.39175 17.3334 9.00008 17.3334C13.6084 17.3334 17.3334 13.6084 17.3334 9.00002C17.3334 4.39169 13.6084 0.666687 9.00008 0.666687ZM11.1584 5.66669L9.00008 7.82502L6.84175 5.66669L5.66675 6.84169L7.82508 9.00002L5.66675 11.1584L6.84175 12.3334L9.00008 10.175L11.1584 12.3334L12.3334 11.1584L10.1751 9.00002L12.3334 6.84169L11.1584 5.66669Z" fill="#FF3B30" />
+            <path d="M9.00008 15.6667C5.32508 15.6667 2.33341 12.675 2.33341 9.00002C2.33341 5.32502 5.32508 2.33335 9.00008 2.33335C12.6751 2.33335 15.6667 5.32502 15.6667 9.00002C15.6667 12.675 12.6751 15.6667 9.00008 15.6667ZM9.00008 4.33335C6.42508 4.33335 4.33341 6.42502 4.33341 9.00002C4.33341 11.575 6.42508 13.6667 9.00008 13.6667C11.5751 13.6667 13.6667 11.575 13.6667 9.00002C13.6667 6.42502 11.5751 4.33335 9.00008 4.33335ZM11.8334 10.4167L10.4167 11.8334L9.00008 10.4167L7.58341 11.8334L6.16675 10.4167L7.58341 9.00002L6.16675 7.58335L7.58341 6.16669L9.00008 7.58335L10.4167 6.16669L11.8334 7.58335L10.4167 9.00002L11.8334 10.4167Z" />
         </svg>
     );
 }
 
-// --- TYPES --- //
-
-export interface UniversalColumn<T> {
-    key: keyof T;
+// Types
+export interface Column<T> {
+    key: keyof T | string;
     label: string;
     sortable?: boolean;
     filterable?: boolean;
-    render?: (value: T[keyof T], row: T) => ReactNode;
+    render?: (value: any, row: T) => ReactNode;
 }
 
 export interface RowProps<T> {
@@ -65,375 +65,482 @@ export interface RowProps<T> {
     onClick?: (row: T) => void;
 }
 
-export interface UniversalTableProps<T> {
-    data: T[];
-    columns: UniversalColumn<T>[];
-    leftActions?: ReactNode;
-    rightActions?: ReactNode;
-    onRefresh?: () => void;
+export interface TableProps<T> {
+    tableId: string;
+    data?: T[];
+    dataFetcher?: (params: {
+        page: number;
+        pageSize: number;
+        sorts: Sort[];
+        filters: Filter[];
+    }) => Promise<{
+        records: T[];
+        total_count: number;
+        last_page: number;
+    }>;
+    columns: Column<T>[];
     getRowProps?: (row: T) => RowProps<T>;
+    onRefresh?: () => void;
     pageSize?: number;
     showToolbar?: boolean;
     showPagination?: boolean;
     className?: string;
-    tableId: string;
 }
 
-type FilterType = 'contains' | 'equals' | 'startsWith';
-
-interface TableContextValue<T> {
-    sortState: { key: keyof T; desc: boolean }[];
-    setSortState: (sort: { key: keyof T; desc: boolean }[]) => void;
-    filterState: { key: keyof T; value: string; type: FilterType }[];
-    setFilterState: (filters: { key: keyof T; value: string; type: FilterType }[]) => void;
+interface Sort {
+    column: string;
+    direction: 'asc' | 'desc';
 }
 
-// --- CONTEXT & PROVIDER --- //
+interface Filter {
+    column: string;
+    operator: 'equals' | 'contains' | 'greater than' | 'less than';
+    value: string;
+}
 
-const TableContext = createContext<TableContextValue<any> | null>(null);
+interface TableState {
+    sorts: Sort[];
+    filters: Filter[];
+    pageIndex: number;
+    pageCount: number;
+    currentPageSize: number;
+}
 
-export const TableProvider = <T extends object>({ children, tableId }: { children: ReactNode; tableId: string; }) => {
-    const [sortState, setSortState] = useState<{ key: keyof T; desc: boolean }[]>([]);
-    const [filterState, setFilterState] = useState<{ key: keyof T; value: string; type: FilterType }[]>([]);
+// Context for table state
+const TableContext = createContext<{
+    sorts: Sort[];
+    setSorts: React.Dispatch<React.SetStateAction<Sort[]>>;
+    filters: Filter[];
+    setFilters: React.Dispatch<React.SetStateAction<Filter[]>>;
+    pageIndex: number;
+    setPageIndex: React.Dispatch<React.SetStateAction<number>>;
+    pageCount: number;
+    setPageCount: React.Dispatch<React.SetStateAction<number>>;
+    currentPageSize: number;
+    setCurrentPageSize: React.Dispatch<React.SetStateAction<number>>;
+} | undefined>(undefined);
 
-    useEffect(() => {
-        try {
-            const savedSort = localStorage.getItem(`table-sort-${tableId}`);
-            if (savedSort) setSortState(JSON.parse(savedSort));
-            const savedFilters = localStorage.getItem(`table-filters-${tableId}`);
-            if (savedFilters) setFilterState(JSON.parse(savedFilters));
-        } catch (error) {
-            console.error("Failed to parse table state from localStorage", error);
-        }
-    }, [tableId]);
-
-    const debouncedSave = useCallback((key: string, value: any) => {
-        const handler = setTimeout(() => localStorage.setItem(key, JSON.stringify(value)), 500);
-        return () => clearTimeout(handler);
-    }, []);
-
-    useEffect(() => {
-        debouncedSave(`table-sort-${tableId}`, sortState);
-    }, [sortState, debouncedSave, tableId]);
-
-    useEffect(() => {
-        debouncedSave(`table-filters-${tableId}`, filterState);
-    }, [filterState, debouncedSave, tableId]);
-
-    const contextValue: TableContextValue<T> = { sortState, setSortState, filterState, setFilterState };
-    return <TableContext.Provider value={contextValue}>{children}</TableContext.Provider>;
-};
-
-const useTableContext = <T extends object>() => {
+const useTableContext = () => {
     const context = useContext(TableContext);
-    if (!context) throw new Error('useTableContext must be used within a TableProvider');
-    return context as TableContextValue<T>;
+    if (!context) {
+        console.error(
+            'useTableContext must be used within TableProvider. Ensure the Table component is wrapped with TableProvider for tableId.'
+        );
+        console.trace(); // Log stack trace for debugging
+        throw new Error('useTableContext must be used within TableProvider');
+    }
+    return context;
 };
 
-// --- MODAL COMPONENTS --- //
+// Provider for table state with persistence
+function TableProvider({ tableId, children }: { tableId: string; children: ReactNode }) {
+    const storageKey = `${tableId}-table-state`;
 
-interface ModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    title: string;
-    children: ReactNode;
-    footer: ReactNode;
-    Icon: React.ComponentType<{ className?: string }>;
+    const loadState = (): TableState => {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+            try {
+                return JSON.parse(saved);
+            } catch {
+                // Invalid JSON, reset
+            }
+        }
+        return {
+            sorts: [],
+            filters: [],
+            pageIndex: 0,
+            pageCount: 1,
+            currentPageSize: 10,
+        };
+    };
+
+    const [sorts, setSorts] = useState<Sort[]>(loadState().sorts);
+    const [filters, setFilters] = useState<Filter[]>(loadState().filters);
+    const [pageIndex, setPageIndex] = useState<number>(loadState().pageIndex);
+    const [pageCount, setPageCount] = useState<number>(loadState().pageCount);
+    const [currentPageSize, setCurrentPageSize] = useState<number>(loadState().currentPageSize);
+
+    useEffect(() => {
+        localStorage.setItem(
+            storageKey,
+            JSON.stringify({ sorts, filters, pageIndex, pageCount, currentPageSize })
+        );
+    }, [sorts, filters, pageIndex, pageCount, currentPageSize, storageKey]);
+
+    return (
+        <TableContext.Provider
+            value={{
+                sorts,
+                setSorts,
+                filters,
+                setFilters,
+                pageIndex,
+                setPageIndex,
+                pageCount,
+                setPageCount,
+                currentPageSize,
+                setCurrentPageSize,
+            }}
+        >
+            {children}
+        </TableContext.Provider>
+    );
 }
 
-const Modal = ({ isOpen, onClose, title, children, footer, Icon }: ModalProps) => {
-    if (!isOpen) return null;
-    return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-head">
-                    <Icon className="modal-icon" />
-                    <h3>{title}</h3>
-                    <button onClick={onClose} className="close-btn" aria-label="Close">
-                        <CancelModalIcon />
-                    </button>
-                </div>
-                <div className="modal-body">{children}</div>
-                <div className="modal-footer">{footer}</div>
-            </div>
-        </div>
-    );
-};
-
-const SortModal = <T extends object>({ isOpen, onClose, columns }: { isOpen: boolean; onClose: () => void; columns: UniversalColumn<T>[]; }) => {
-    const { sortState, setSortState } = useTableContext<T>();
-    const [localSorts, setLocalSorts] = useState(sortState.map(s => ({ key: String(s.key), desc: s.desc })));
-    
-    useEffect(() => {
-      setLocalSorts(sortState.map(s => ({ key: String(s.key), desc: s.desc })));
-    }, [isOpen, sortState]);
-
-    const addSort = () => setLocalSorts([...localSorts, { key: '', desc: false }]);
-    const removeSort = (index: number) => setLocalSorts(localSorts.filter((_, i) => i !== index));
-
-    const updateSort = (index: number, field: 'key' | 'desc', value: string | boolean) => {
-        setLocalSorts(localSorts.map((sort, i) => (i === index ? { ...sort, [field]: value } : sort)));
-    };
-
-    const handleApply = () => {
-        const validSorts = localSorts.filter(s => s.key).map(s => ({ key: s.key as keyof T, desc: s.desc }));
-        setSortState(validSorts);
-        onClose();
-    };
-
-    return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            title="Sort Table"
-            Icon={SortIcon}
-            footer={
-                <>
-                    <button onClick={onClose} className="cancel-btn">Cancel</button>
-                    <button onClick={handleApply} className="apply-btn">Apply Sort</button>
-                </>
-            }
-        >
-            {localSorts.map((sort, index) => (
-                <div key={index} className="sort-item">
-                    <select value={sort.key} onChange={e => updateSort(index, 'key', e.target.value)}>
-                        <option value="">Select Column...</option>
-                        {columns.filter(c => c.sortable).map(col => (
-                            <option key={String(col.key)} value={String(col.key)}>{col.label}</option>
-                        ))}
-                    </select>
-                    <select value={sort.desc ? 'desc' : 'asc'} onChange={e => updateSort(index, 'desc', e.target.value === 'desc')}>
-                        <option value="asc">Ascending</option>
-                        <option value="desc">Descending</option>
-                    </select>
-                    <button className="delete-btn" onClick={() => removeSort(index)} aria-label="Delete sort criterion">
-                        <TrashIcon />
-                    </button>
-                </div>
-            ))}
-            <button className="add-btn" onClick={addSort} aria-label="Add sort criterion">
-                <AddIcon /> Add Sort Rule
-            </button>
-        </Modal>
-    );
-};
-
-const FilterModal = <T extends object>({ isOpen, onClose, columns }: { isOpen: boolean; onClose: () => void; columns: UniversalColumn<T>[]; }) => {
-    const { filterState, setFilterState } = useTableContext<T>();
-    const [localFilters, setLocalFilters] = useState<{ key: string; value: string; type: FilterType }[]>(filterState.map(f => ({ ...f, key: String(f.key) })));
-    
-    useEffect(() => {
-      setLocalFilters(filterState.map(f => ({ ...f, key: String(f.key) })));
-    }, [isOpen, filterState]);
-
-    const addFilter = () => setLocalFilters([...localFilters, { key: '', value: '', type: 'contains' }]);
-    const removeFilter = (index: number) => setLocalFilters(localFilters.filter((_, i) => i !== index));
-
-    const updateFilter = (index: number, field: 'key' | 'value' | 'type', value: string) => {
-        setLocalFilters(localFilters.map((filter, i) => (i === index ? { ...filter, [field]: value } : filter)));
-    };
-
-    const handleApply = () => {
-        const validFilters = localFilters.filter(f => f.key && f.value).map(f => ({ ...f, key: f.key as keyof T }));
-        setFilterState(validFilters);
-        onClose();
-    };
-
-    return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            title="Filter Table"
-            Icon={FilterIcon}
-            footer={
-                <>
-                    <button onClick={onClose} className="cancel-btn">Cancel</button>
-                    <button onClick={handleApply} className="apply-btn">Apply Filters</button>
-                </>
-            }
-        >
-            {localFilters.map((filter, index) => (
-                <div key={index} className="filter-item">
-                    <select value={filter.key} onChange={e => updateFilter(index, 'key', e.target.value)}>
-                        <option value="">Select Column...</option>
-                        {columns.filter(c => c.filterable).map(col => (
-                            <option key={String(col.key)} value={String(col.key)}>{col.label}</option>
-                        ))}
-                    </select>
-                    <select value={filter.type} onChange={e => updateFilter(index, 'type', e.target.value)}>
-                        <option value="contains">Contains</option>
-                        <option value="equals">Equals</option>
-                        <option value="startsWith">Starts With</option>
-                    </select>
-                    <input type="text" value={filter.value} placeholder="Enter value..." onChange={e => updateFilter(index, 'value', e.target.value)} />
-                    <button className="delete-btn" onClick={() => removeFilter(index)} aria-label="Delete filter criterion">
-                        <TrashIcon />
-                    </button>
-                </div>
-            ))}
-            <button className="add-btn" onClick={addFilter} aria-label="Add filter criterion">
-                <AddIcon /> Add Filter Rule
-            </button>
-        </Modal>
-    );
-};
-
-// --- MAIN TABLE COMPONENT --- //
-
-export const UniversalTable = <T extends object>({
-    data,
+// Main Table component
+function Table<T extends object>({
+    data: propData,
+    dataFetcher,
     columns,
-    leftActions,
-    rightActions,
-    onRefresh,
     getRowProps,
+    onRefresh,
     pageSize = 10,
     showToolbar = true,
     showPagination = true,
     className = '',
-}: UniversalTableProps<T>) => {
-    const [sortModalOpen, setSortModalOpen] = useState(false);
-    const [filterModalOpen, setFilterModalOpen] = useState(false);
-    const [currentPageSize, setCurrentPageSize] = useState(pageSize);
-    const [pageIndex, setPageIndex] = useState(0);
-    const { sortState, setSortState, filterState, setFilterState } = useTableContext<T>();
+}: TableProps<T>) {
+    try {
+        const {
+            sorts,
+            setSorts,
+            filters,
+            setFilters,
+            pageIndex,
+            setPageIndex,
+            pageCount,
+            setPageCount,
+            currentPageSize,
+            setCurrentPageSize,
+        } = useTableContext();
 
-    const processedData = useCallback(() => {
-        let result = [...data];
+        const [internalData, setInternalData] = useState<T[]>([]);
+        const [loading, setLoading] = useState(false);
+        const [error, setError] = useState<string | null>(null);
+        const [sortModalOpen, setSortModalOpen] = useState(false);
+        const [filterModalOpen, setFilterModalOpen] = useState(false);
 
-        if (filterState.length > 0) {
-            result = result.filter(row =>
-                filterState.every(({ key, value, type }) => {
-                    const rowValue = String(row[key] ?? '').toLowerCase();
-                    const filterValue = value.toLowerCase();
-                    if (type === 'contains') return rowValue.includes(filterValue);
-                    if (type === 'equals') return rowValue === filterValue;
-                    if (type === 'startsWith') return rowValue.startsWith(filterValue);
-                    return true;
-                })
-            );
-        }
+        const data = dataFetcher ? internalData : (propData || []);
 
-        if (sortState.length > 0) {
-            result.sort((a, b) => {
-                for (const { key, desc } of sortState) {
-                    const aVal = a[key];
-                    const bVal = b[key];
-                    if (aVal < bVal) return desc ? 1 : -1;
-                    if (aVal > bVal) return desc ? -1 : 1;
+        // Fetch data if dataFetcher is provided
+        const fetchData = useCallback(async () => {
+            if (!dataFetcher) return;
+
+            setLoading(true);
+            setError(null);
+            try {
+                const response = await dataFetcher({
+                    page: pageIndex,
+                    pageSize: currentPageSize,
+                    sorts,
+                    filters,
+                });
+                setInternalData(response.records);
+                setPageCount(response.last_page);
+            } catch (err) {
+                setError('Failed to fetch data. Please try again.');
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        }, [dataFetcher, pageIndex, currentPageSize, sorts, filters, setPageCount]);
+
+        useEffect(() => {
+            fetchData();
+        }, [fetchData]);
+
+        useEffect(() => {
+            setCurrentPageSize(pageSize);
+        }, [pageSize, setCurrentPageSize]);
+
+        // Local sorting if no dataFetcher
+        const sortedData = useCallback(() => {
+            if (dataFetcher || sorts.length === 0) return data;
+
+            return [...data].sort((a, b) => {
+                for (const { column, direction } of sorts) {
+                    const valA = a[column as keyof T];
+                    const valB = b[column as keyof T];
+                    if (valA < valB) return direction === 'asc' ? -1 : 1;
+                    if (valA > valB) return direction === 'asc' ? 1 : -1;
                 }
                 return 0;
             });
+        }, [data, sorts, dataFetcher]);
+
+        // Local filtering if no dataFetcher
+        const filteredData = useCallback(() => {
+            const dataToFilter = sortedData();
+            if (dataFetcher || filters.length === 0) return dataToFilter;
+
+            return dataToFilter.filter(row => {
+                return filters.every(({ column, operator, value }) => {
+                    const cellValue = String(row[column as keyof T]).toLowerCase();
+                    const filterValue = value.toLowerCase();
+
+                    switch (operator) {
+                        case 'equals':
+                            return cellValue === filterValue;
+                        case 'contains':
+                            return cellValue.includes(filterValue);
+                        case 'greater than':
+                            return Number(cellValue) > Number(filterValue);
+                        case 'less than':
+                            return Number(cellValue) < Number(filterValue);
+                        default:
+                            return true;
+                    }
+                });
+            });
+        }, [sortedData, filters, dataFetcher]);
+
+        const paginatedData = filteredData().slice(
+            pageIndex * currentPageSize,
+            (pageIndex + 1) * currentPageSize
+        );
+
+        const handleRefresh = () => {
+            if (onRefresh) onRefresh();
+            if (dataFetcher) fetchData();
+        };
+
+        const clearFilters = () => setFilters([]);
+
+        const clearSorts = () => setSorts([]);
+
+        if (loading) {
+            return <div className="universal-table">Loading...</div>;
         }
 
-        return result;
-    }, [data, sortState, filterState]);
+        if (error) {
+            return <div className="universal-table">{error}</div>;
+        }
 
-    const finalData = processedData();
-    const pageCount = Math.ceil(finalData.length / currentPageSize);
-    const paginatedData = finalData.slice(pageIndex * currentPageSize, (pageIndex + 1) * currentPageSize);
-
-    useEffect(() => {
-        setPageIndex(0);
-    }, [sortState, filterState, data, currentPageSize]);
-
-    const clearFilters = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setFilterState([]);
-    };
-
-    const clearSort = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setSortState([]);
-    };
-
-    const Toolbar = () => (
-        <div className="table-toolbar">
-            <div className="toolbar-actions-left">
-                {leftActions}
-            </div>
-            <div className="toolbar-actions-right">
-                <div className="sort-btn-wrapper">
-                    {sortState.length > 0 && <button className="clear-filters-btn" onClick={clearSort} aria-label="Clear all sorts"><CancelModalIcon/></button>}
-                    <button onClick={() => setSortModalOpen(true)} aria-label="Sort" className="action-btn">
-                        <SortIcon /> Sort
-                        {sortState.length > 0 && <span className="badge">{sortState.length}</span>}
-                    </button>
-                </div>
-                <div className="filter-btn-wrapper">
-                    {filterState.length > 0 && <button className="clear-filters-btn" onClick={clearFilters} aria-label="Clear all filters"><CancelModalIcon/></button>}
-                    <button onClick={() => setFilterModalOpen(true)} aria-label="Filter" className="action-btn">
-                        <FilterIcon /> Filter
-                        {filterState.length > 0 && <span className="badge">{filterState.length}</span>}
-                    </button>
-                </div>
-                {onRefresh && (
-                    <button onClick={onRefresh} aria-label="Refresh" className="action-btn">
-                        <RefreshIcon />
-                    </button>
+        return (
+            <div className={`universal-table ${className}`}>
+                {showToolbar && (
+                    <div className="table-toolbar">
+                        <div className="toolbar-actions-left">
+                            <button className="action-btn" onClick={handleRefresh}>
+                                <RefreshIcon />
+                                Refresh
+                            </button>
+                        </div>
+                        <div className="toolbar-actions-right">
+                            <div className="filter-btn-wrapper">
+                                <button className="action-btn" onClick={() => setFilterModalOpen(true)}>
+                                    <FilterIcon />
+                                    Filter
+                                </button>
+                                {filters.length > 0 && (
+                                    <>
+                                        <span className="badge">{filters.length}</span>
+                                        <button className="clear-filters-btn" onClick={clearFilters}>
+                                            <CancelModalIcon/>
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                            <div className="sort-btn-wrapper">
+                                <button className="action-btn" onClick={() => setSortModalOpen(true)}>
+                                    <SortIcon />
+                                    Sort
+                                </button>
+                                {sorts.length > 0 && (
+                                    <>
+                                        <span className="badge">{sorts.length}</span>
+                                        <button className="clear-filters-btn" onClick={clearSorts}>
+                                            <CancelModalIcon/>
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 )}
-                {rightActions}
+                <div className="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                {columns.map(col => (
+                                    <th key={String(col.key)}>
+                                        {col.label}
+                                        {col.sortable && <span className="sort-icon"><SortIcon /></span>}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {paginatedData.map((row, idx) => {
+                                const { className = '', onClick } = getRowProps ? getRowProps(row) : {};
+                                return (
+                                    <tr key={idx} className={className} onClick={() => onClick?.(row)}>
+                                        {columns.map(col => (
+                                            <td key={String(col.key)}>
+                                                {col.render ? col.render(row[col.key as keyof T], row) : String(row[col.key as keyof T] ?? '')}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+                {showPagination && (
+                    <div className="table-pagination">
+                        <span>Page <strong>{pageIndex + 1}</strong> of <strong>{pageCount || 1}</strong></span>
+                        <div className="pagination-controls">
+                            <button onClick={() => setPageIndex(0)} disabled={pageIndex === 0}>First</button>
+                            <button onClick={() => setPageIndex(p => Math.max(0, p - 1))} disabled={pageIndex === 0}>Prev</button>
+                            <button onClick={() => setPageIndex(p => Math.min(pageCount - 1, p + 1))} disabled={pageIndex >= pageCount - 1}>Next</button>
+                            <button onClick={() => setPageIndex(pageCount - 1)} disabled={pageIndex >= pageCount - 1}>Last</button>
+                        </div>
+                        <select value={currentPageSize} onChange={e => setCurrentPageSize(Number(e.target.value))}>
+                            {[10, 20, 50, 100].map(ps => (<option key={ps} value={ps}>Show {ps}</option>))}
+                        </select>
+                    </div>
+                )}
+                <SortModal isOpen={sortModalOpen} onClose={() => setSortModalOpen(false)} columns={columns} />
+                <FilterModal isOpen={filterModalOpen} onClose={() => setFilterModalOpen(false)} columns={columns} />
             </div>
-        </div>
-    );
+        );
+    } catch (error) {
+        console.error('Table component error:', error);
+        return (
+            <div className="universal-table error">
+                <p>Dojo Training Error: Unable to render table. Please ensure it is wrapped with TableProvider.</p>
+            </div>
+        );
+    }
+}
+
+// Sort Modal
+function SortModal<T>({ isOpen, onClose, columns }: { isOpen: boolean; onClose: () => void; columns: Column<T>[] }) {
+    const { sorts, setSorts } = useTableContext();
+
+    const addSort = () => setSorts(prev => [...prev, { column: '', direction: 'asc' }]);
+
+    const updateSort = (index: number, field: 'column' | 'direction', value: string) => {
+        setSorts(prev => prev.map((s, i) => i === index ? { ...s, [field]: value } : s));
+    };
+
+    const removeSort = (index: number) => setSorts(prev => prev.filter((_, i) => i !== index));
+
+    const applySorts = () => onClose();
+
+    if (!isOpen) return null;
 
     return (
-        <div className={`universal-table ${className}`}>
-            {showToolbar && <Toolbar />}
-            <div style={{ overflowX: 'auto' }}>
-                <table>
-                    <thead>
-                        <tr>
-                            {columns.map(col => (
-                                <th key={String(col.key)}>
-                                    {col.label}
-                                    {col.sortable && (
-                                        <span className="sort-icon">
-                                            {sortState.find(s => s.key === col.key)?.desc ? '↓' : '↑'}
-                                        </span>
-                                    )}
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {paginatedData.map((row, idx) => {
-                            const { className = '', onClick } = getRowProps ? getRowProps(row) : {};
-                            return (
-                                <tr key={idx} className={className} onClick={() => onClick?.(row)}>
-                                    {columns.map(col => (
-                                        <td key={String(col.key)}>
-                                            {col.render ? col.render(row[col.key], row) : String(row[col.key] ?? '')}
-                                        </td>
-                                    ))}
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
-            {showPagination && (
-                <div className="table-pagination">
-                    <span>Page <strong>{pageIndex + 1}</strong> of <strong>{pageCount || 1}</strong></span>
-                    <div className="pagination-controls">
-                        <button onClick={() => setPageIndex(0)} disabled={pageIndex === 0}>First</button>
-                        <button onClick={() => setPageIndex(p => p - 1)} disabled={pageIndex === 0}>Prev</button>
-                        <button onClick={() => setPageIndex(p => p + 1)} disabled={pageIndex >= pageCount - 1}>Next</button>
-                        <button onClick={() => setPageIndex(pageCount - 1)} disabled={pageIndex >= pageCount - 1}>Last</button>
-                    </div>
-                    <select value={currentPageSize} onChange={e => setCurrentPageSize(Number(e.target.value))}>
-                        {[10, 20, 50, 100].map(ps => (<option key={ps} value={ps}>Show {ps}</option>))}
-                    </select>
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+                <div className="modal-head">
+                    <h3>Sort By</h3>
+                    <button className="close-btn" onClick={onClose}>×</button>
                 </div>
-            )}
-            <SortModal isOpen={sortModalOpen} onClose={() => setSortModalOpen(false)} columns={columns} />
-            <FilterModal isOpen={filterModalOpen} onClose={() => setFilterModalOpen(false)} columns={columns} />
+                <div className="modal-body">
+                    {sorts.map((sort, index) => (
+                        <div key={index} className="sort-item">
+                            <select
+                                value={sort.column}
+                                onChange={e => updateSort(index, 'column', e.target.value)}
+                            >
+                                <option value="">Select Column</option>
+                                {columns.filter(c => c.sortable).map(c => (
+                                    <option key={String(c.key)} value={String(c.key)}>{c.label}</option>
+                                ))}
+                            </select>
+                            <select
+                                value={sort.direction}
+                                onChange={e => updateSort(index, 'direction', e.target.value)}
+                            >
+                                <option value="asc">Ascending</option>
+                                <option value="desc">Descending</option>
+                            </select>
+                            <button className="delete-btn" onClick={() => removeSort(index)}>
+                                <TrashIcon />
+                            </button>
+                        </div>
+                    ))}
+                    <button className="add-btn" onClick={addSort}>
+                        <AddIcon />
+                        Add Sort
+                    </button>
+                </div>
+                <div className="modal-footer">
+                    <button className="cancel-btn" onClick={onClose}>Cancel</button>
+                    <button className="apply-btn" onClick={applySorts}>Apply</button>
+                </div>
+            </div>
         </div>
     );
-};
+}
 
-export const UniversalTableWithProvider = <T extends object>(props: UniversalTableProps<T>) => (
-    <TableProvider<T> tableId={props.tableId}>
-        <UniversalTable<T> {...props} />
-    </TableProvider>
-);
+// Filter Modal
+function FilterModal<T>({ isOpen, onClose, columns }: { isOpen: boolean; onClose: () => void; columns: Column<T>[] }) {
+    const { filters, setFilters } = useTableContext();
+
+    const addFilter = () => setFilters(prev => [...prev, { column: '', operator: 'equals', value: '' }]);
+
+    const updateFilter = (index: number, field: 'column' | 'operator' | 'value', value: string) => {
+        setFilters(prev => prev.map((f, i) => i === index ? { ...f, [field]: value } : f));
+    };
+
+    const removeFilter = (index: number) => setFilters(prev => prev.filter((_, i) => i !== index));
+
+    const applyFilters = () => onClose();
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+                <div className="modal-head">
+                    <h3>Filters</h3>
+                    <button className="close-btn" onClick={onClose}>×</button>
+                </div>
+                <div className="modal-body">
+                    {filters.map((filter, index) => (
+                        <div key={index} className="filter-item">
+                            <select
+                                value={filter.column}
+                                onChange={e => updateFilter(index, 'column', e.target.value)}
+                            >
+                                <option value="">Select Column</option>
+                                {columns.filter(c => c.filterable).map(c => (
+                                    <option key={String(c.key)} value={String(c.key)}>{c.label}</option>
+                                ))}
+                            </select>
+                            <select
+                                value={filter.operator}
+                                onChange={e => updateFilter(index, 'operator', e.target.value)}
+                            >
+                                <option value="equals">Equals</option>
+                                <option value="contains">Contains</option>
+                                <option value="greater than">Greater Than</option>
+                                <option value="less than">Less Than</option>
+                            </select>
+                            <input
+                                type="text"
+                                value={filter.value}
+                                onChange={e => updateFilter(index, 'value', e.target.value)}
+                                placeholder="Value"
+                            />
+                            <button className="delete-btn" onClick={() => removeFilter(index)}>
+                                <TrashIcon />
+                            </button>
+                        </div>
+                    ))}
+                    <button className="add-btn" onClick={addFilter}>
+                        <AddIcon />
+                        Add Filter
+                    </button>
+                </div>
+                <div className="modal-footer">
+                    <button className="cancel-btn" onClick={onClose}>Cancel</button>
+                    <button className="apply-btn" onClick={applyFilters}>Apply</button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export { Table, TableProvider };

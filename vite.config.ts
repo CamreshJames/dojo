@@ -16,12 +16,19 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@lib": "/src/lib",
-      "@src": "/src"
-    }
+      '@lib': '/src/lib',
+      '@src': '/src',
+    },
   },
   server: {
-    host: "127.0.0.1", 
-    port: 9876       
+    host: '127.0.0.1',
+    port: 9876,
+    proxy: {
+      '/api': {
+        target: 'https://the-dojo.pagoda.africa',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   }
 });

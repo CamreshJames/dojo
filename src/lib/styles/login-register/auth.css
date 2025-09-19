@@ -109,10 +109,9 @@
   font-size: clamp(0.8125rem, 2vw, 0.875rem);
 }
 
-.form-group input,
-.form-group select {
-  width: 100%;
-  padding: 0.75rem 0;
+.form-group input{
+  width: calc(100% - 1rem);
+  padding: 0.75rem 0.5rem;
   border: 1px solid hsla(210, 14%, 89%, 1);
   border-radius: 0.25rem;
   font-size: clamp(0.8125rem, 2vw, 0.875rem);
@@ -179,6 +178,7 @@
 
 .auth-button {
   width: 100%;
+  margin: auto;
   padding: 0.75rem;
   background: rgb(255, 81, 0);
   color: white;
