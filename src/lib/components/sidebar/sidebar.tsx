@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from '@tanstack/react-router';
 import { UsersIcon, TasksIcon, SubjectsIcon, CollapseIcon } from '@lib/utils/icons';
-import './Sidebar.css';
+import './sidebar.css';
 
 interface SidebarProps {
   isCollapsed: boolean;

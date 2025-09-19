@@ -4,7 +4,7 @@ import { useAuth } from '@lib/contexts/AuthContext';
 import { Link, useNavigate } from '@tanstack/react-router';
 import dojoLogo from "@src/assets/dojo.png";
 import { SearchIcon, HeadphonesIcon } from '@lib/utils/icons';
-import './Header.css';
+import './header.css';
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
