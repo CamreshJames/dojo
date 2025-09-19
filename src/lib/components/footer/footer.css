@@ -1,0 +1,28 @@
+.footer-container {
+  padding: 0 1rem;
+  background: hsl(191, 64%, 98%);
+  border-top: 1px solid hsla(191, 64%, 90%, 1);
+  text-align: center;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.footer-text {
+  font-size: 0.75rem;
+  color: hsl(0, 0%, 40%);
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .footer-container {
+    padding: 0 0.5rem;
+  }
+}

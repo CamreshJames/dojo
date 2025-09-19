@@ -1,0 +1,1691 @@
+{
+	"info": {
+		"_postman_id": "bd265c5a-079e-4ee4-a4f1-56e980ec9ab1",
+		"name": "Trainee Tasks Public",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "2543413"
+	},
+	"item": [
+		{
+			"name": "admin",
+			"item": [
+				{
+					"name": "users",
+					"item": [
+						{
+							"name": "get users",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/admin/users/?page=1&pageSize=10",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"admin",
+										"users",
+										""
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										},
+										{
+											"key": "role",
+											"value": "admin",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "get users",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{host}}/admin/users/?page=1&pageSize=10",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"admin",
+												"users",
+												""
+											],
+											"query": [
+												{
+													"key": "page",
+													"value": "1"
+												},
+												{
+													"key": "pageSize",
+													"value": "10"
+												},
+												{
+													"key": "role",
+													"value": "admin",
+													"disabled": true
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Methods",
+											"value": "GET"
+										},
+										{
+											"key": "Access-Control-Allow-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Access-Control-Expose-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Date",
+											"value": "Wed, 17 Sep 2025 06:32:36 GMT"
+										},
+										{
+											"key": "Content-Length",
+											"value": "2747"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"domain\": \"users\",\n    \"current_page\": 1,\n    \"last_page\": 2,\n    \"page_size\": 10,\n    \"total_count\": 19,\n    \"records\": [\n        {\n            \"id\": 19,\n            \"email\": \"ochomoswill@gmail.com\",\n            \"name\": \"ochomoswill\",\n            \"google_id\": \"106925395295268822541\",\n            \"role\": \"trainee\",\n            \"status\": \"approved\",\n            \"avatar_url\": \"https://lh3.googleusercontent.com/a/ACg8ocLNG01W8-1auBhKJjJf5_tbbwvU_-vI0-vsvMQy-jKukT2ISRqz=s96-c\",\n            \"created_at\": \"2025-06-17T03:41:40.502Z\",\n            \"updated_at\": \"2025-06-17T23:04:09.754Z\"\n        },\n        {\n            \"id\": 17,\n            \"email\": \"amanda.thomas@email.com\",\n            \"name\": \"Amanda Thomas\",\n            \"google_id\": \"google_trainee_014\",\n            \"role\": \"trainee\",\n            \"status\": \"pending\",\n            \"avatar_url\": \"https://i.pravatar.cc/150?img=16\",\n            \"created_at\": \"2025-06-17T02:07:03.763Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.763Z\"\n        },\n        {\n            \"id\": 16,\n            \"email\": \"kevin.anderson@email.com\",\n            \"name\": \"Kevin Anderson\",\n            \"google_id\": \"google_trainee_013\",\n            \"role\": \"trainee\",\n            \"status\": \"pending\",\n            \"avatar_url\": \"https://i.pravatar.cc/150?img=15\",\n            \"created_at\": \"2025-06-16T02:07:03.763Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.763Z\"\n        },\n        {\n            \"id\": 15,\n            \"email\": \"helen.white@email.com\",\n            \"name\": \"Helen White\",\n            \"google_id\": \"google_trainee_012\",\n            \"role\": \"trainee\",\n            \"status\": \"pending\",\n            \"avatar_url\": \"https://i.pravatar.cc/150?img=14\",\n            \"created_at\": \"2025-06-15T02:07:03.763Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.763Z\"\n        },\n        {\n            \"id\": 14,\n            \"email\": \"robert.jones@email.com\",\n            \"name\": \"Robert Jones\",\n            \"google_id\": \"google_trainee_011\",\n            \"role\": \"trainee\",\n            \"status\": \"pending\",\n            \"avatar_url\": \"https://i.pravatar.cc/150?img=13\",\n            \"created_at\": \"2025-06-14T02:07:03.763Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.763Z\"\n        },\n        {\n            \"id\": 18,\n            \"email\": \"spam.user@email.com\",\n            \"name\": \"Spam User\",\n            \"google_id\": \"google_trainee_015\",\n            \"role\": \"trainee\",\n            \"status\": \"rejected\",\n            \"avatar_url\": null,\n            \"created_at\": \"2025-06-12T02:07:03.763Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.763Z\"\n        },\n        {\n            \"id\": 13,\n            \"email\": \"maria.martinez@email.com\",\n            \"name\": \"Maria Martinez\",\n            \"google_id\": \"google_trainee_010\",\n            \"role\": \"trainee\",\n            \"status\": \"approved\",\n            \"avatar_url\": \"https://i.pravatar.cc/150?img=12\",\n            \"created_at\": \"2025-06-11T02:07:03.763Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.763Z\"\n        },\n        {\n            \"id\": 12,\n            \"email\": \"james.brown@email.com\",\n            \"name\": \"James Brown\",\n            \"google_id\": \"google_trainee_009\",\n            \"role\": \"trainee\",\n            \"status\": \"approved\",\n            \"avatar_url\": \"https://i.pravatar.cc/150?img=11\",\n            \"created_at\": \"2025-06-10T02:07:03.763Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.763Z\"\n        },\n        {\n            \"id\": 11,\n            \"email\": \"lisa.taylor@email.com\",\n            \"name\": \"Lisa Taylor\",\n            \"google_id\": \"google_trainee_008\",\n            \"role\": \"trainee\",\n            \"status\": \"approved\",\n            \"avatar_url\": \"https://i.pravatar.cc/150?img=10\",\n            \"created_at\": \"2025-06-09T02:07:03.763Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.763Z\"\n        },\n        {\n            \"id\": 10,\n            \"email\": \"david.lee@email.com\",\n            \"name\": \"David Lee\",\n            \"google_id\": \"google_trainee_007\",\n            \"role\": \"trainee\",\n            \"status\": \"approved\",\n            \"avatar_url\": \"https://i.pravatar.cc/150?img=9\",\n            \"created_at\": \"2025-06-08T02:07:03.763Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.763Z\"\n        }\n    ]\n}"
+								}
+							]
+						},
+						{
+							"name": "pending trainees",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/admin/users/?page=1&pageSize=10",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"admin",
+										"users",
+										""
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										},
+										{
+											"key": "role",
+											"value": "admin",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "pending trainees",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{host}}/admin/users/?page=1&pageSize=10",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"admin",
+												"users",
+												""
+											],
+											"query": [
+												{
+													"key": "page",
+													"value": "1"
+												},
+												{
+													"key": "pageSize",
+													"value": "10"
+												},
+												{
+													"key": "role",
+													"value": "admin",
+													"disabled": true
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Methods",
+											"value": "GET"
+										},
+										{
+											"key": "Access-Control-Allow-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Access-Control-Expose-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Date",
+											"value": "Wed, 17 Sep 2025 06:33:10 GMT"
+										},
+										{
+											"key": "Content-Length",
+											"value": "2747"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"domain\": \"users\",\n    \"current_page\": 1,\n    \"last_page\": 2,\n    \"page_size\": 10,\n    \"total_count\": 19,\n    \"records\": [\n        {\n            \"id\": 19,\n            \"email\": \"ochomoswill@gmail.com\",\n            \"name\": \"ochomoswill\",\n            \"google_id\": \"106925395295268822541\",\n            \"role\": \"trainee\",\n            \"status\": \"approved\",\n            \"avatar_url\": \"https://lh3.googleusercontent.com/a/ACg8ocLNG01W8-1auBhKJjJf5_tbbwvU_-vI0-vsvMQy-jKukT2ISRqz=s96-c\",\n            \"created_at\": \"2025-06-17T03:41:40.502Z\",\n            \"updated_at\": \"2025-06-17T23:04:09.754Z\"\n        },\n        {\n            \"id\": 17,\n            \"email\": \"amanda.thomas@email.com\",\n            \"name\": \"Amanda Thomas\",\n            \"google_id\": \"google_trainee_014\",\n            \"role\": \"trainee\",\n            \"status\": \"pending\",\n            \"avatar_url\": \"https://i.pravatar.cc/150?img=16\",\n            \"created_at\": \"2025-06-17T02:07:03.763Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.763Z\"\n        },\n        {\n            \"id\": 16,\n            \"email\": \"kevin.anderson@email.com\",\n            \"name\": \"Kevin Anderson\",\n            \"google_id\": \"google_trainee_013\",\n            \"role\": \"trainee\",\n            \"status\": \"pending\",\n            \"avatar_url\": \"https://i.pravatar.cc/150?img=15\",\n            \"created_at\": \"2025-06-16T02:07:03.763Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.763Z\"\n        },\n        {\n            \"id\": 15,\n            \"email\": \"helen.white@email.com\",\n            \"name\": \"Helen White\",\n            \"google_id\": \"google_trainee_012\",\n            \"role\": \"trainee\",\n            \"status\": \"pending\",\n            \"avatar_url\": \"https://i.pravatar.cc/150?img=14\",\n            \"created_at\": \"2025-06-15T02:07:03.763Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.763Z\"\n        },\n        {\n            \"id\": 14,\n            \"email\": \"robert.jones@email.com\",\n            \"name\": \"Robert Jones\",\n            \"google_id\": \"google_trainee_011\",\n            \"role\": \"trainee\",\n            \"status\": \"pending\",\n            \"avatar_url\": \"https://i.pravatar.cc/150?img=13\",\n            \"created_at\": \"2025-06-14T02:07:03.763Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.763Z\"\n        },\n        {\n            \"id\": 18,\n            \"email\": \"spam.user@email.com\",\n            \"name\": \"Spam User\",\n            \"google_id\": \"google_trainee_015\",\n            \"role\": \"trainee\",\n            \"status\": \"rejected\",\n            \"avatar_url\": null,\n            \"created_at\": \"2025-06-12T02:07:03.763Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.763Z\"\n        },\n        {\n            \"id\": 13,\n            \"email\": \"maria.martinez@email.com\",\n            \"name\": \"Maria Martinez\",\n            \"google_id\": \"google_trainee_010\",\n            \"role\": \"trainee\",\n            \"status\": \"approved\",\n            \"avatar_url\": \"https://i.pravatar.cc/150?img=12\",\n            \"created_at\": \"2025-06-11T02:07:03.763Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.763Z\"\n        },\n        {\n            \"id\": 12,\n            \"email\": \"james.brown@email.com\",\n            \"name\": \"James Brown\",\n            \"google_id\": \"google_trainee_009\",\n            \"role\": \"trainee\",\n            \"status\": \"approved\",\n            \"avatar_url\": \"https://i.pravatar.cc/150?img=11\",\n            \"created_at\": \"2025-06-10T02:07:03.763Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.763Z\"\n        },\n        {\n            \"id\": 11,\n            \"email\": \"lisa.taylor@email.com\",\n            \"name\": \"Lisa Taylor\",\n            \"google_id\": \"google_trainee_008\",\n            \"role\": \"trainee\",\n            \"status\": \"approved\",\n            \"avatar_url\": \"https://i.pravatar.cc/150?img=10\",\n            \"created_at\": \"2025-06-09T02:07:03.763Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.763Z\"\n        },\n        {\n            \"id\": 10,\n            \"email\": \"david.lee@email.com\",\n            \"name\": \"David Lee\",\n            \"google_id\": \"google_trainee_007\",\n            \"role\": \"trainee\",\n            \"status\": \"approved\",\n            \"avatar_url\": \"https://i.pravatar.cc/150?img=9\",\n            \"created_at\": \"2025-06-08T02:07:03.763Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.763Z\"\n        }\n    ]\n}"
+								}
+							]
+						},
+						{
+							"name": "get single user",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/admin/users/19",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"admin",
+										"users",
+										"19"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "get single user",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{host}}/admin/users/19",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"admin",
+												"users",
+												"19"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Methods",
+											"value": "GET"
+										},
+										{
+											"key": "Access-Control-Allow-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Access-Control-Expose-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Date",
+											"value": "Wed, 17 Sep 2025 06:33:18 GMT"
+										},
+										{
+											"key": "Content-Length",
+											"value": "378"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"user\": {\n        \"id\": 19,\n        \"email\": \"ochomoswill@gmail.com\",\n        \"name\": \"ochomoswill\",\n        \"google_id\": \"106925395295268822541\",\n        \"role\": \"trainee\",\n        \"status\": \"approved\",\n        \"avatar_url\": \"https://lh3.googleusercontent.com/a/ACg8ocLNG01W8-1auBhKJjJf5_tbbwvU_-vI0-vsvMQy-jKukT2ISRqz=s96-c\",\n        \"created_at\": \"2025-06-17T03:41:40.502Z\",\n        \"updated_at\": \"2025-06-17T23:04:09.754Z\"\n    },\n    \"message\": \"User retrieved successfully\"\n}"
+								}
+							]
+						},
+						{
+							"name": "update status",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"approved\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/admin/users/19/status",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"admin",
+										"users",
+										"19",
+										"status"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "update status",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"status\": \"approved\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{host}}/admin/users/19/status",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"admin",
+												"users",
+												"19",
+												"status"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Methods",
+											"value": "PUT"
+										},
+										{
+											"key": "Access-Control-Allow-Headers",
+											"value": "content-type, authorization, user-agent, accept, cache-control, host, accept-encoding, connection, content-length, postman-token"
+										},
+										{
+											"key": "Access-Control-Expose-Headers",
+											"value": "content-type, authorization, user-agent, accept, cache-control, host, accept-encoding, connection, content-length, postman-token"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Date",
+											"value": "Wed, 17 Sep 2025 06:33:24 GMT"
+										},
+										{
+											"key": "Content-Length",
+											"value": "382"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"user\": {\n        \"id\": 19,\n        \"email\": \"ochomoswill@gmail.com\",\n        \"name\": \"ochomoswill\",\n        \"google_id\": \"106925395295268822541\",\n        \"role\": \"trainee\",\n        \"status\": \"approved\",\n        \"avatar_url\": \"https://lh3.googleusercontent.com/a/ACg8ocLNG01W8-1auBhKJjJf5_tbbwvU_-vI0-vsvMQy-jKukT2ISRqz=s96-c\",\n        \"created_at\": \"2025-06-17T03:41:40.502Z\",\n        \"updated_at\": \"2025-07-23T01:53:18.866Z\"\n    },\n    \"message\": \"User status updated to approved\"\n}"
+								}
+							]
+						},
+						{
+							"name": "update role",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"role\": \"trainee\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/admin/users/19/role",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"admin",
+										"users",
+										"19",
+										"role"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "update role",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"role\": \"trainee\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{host}}/admin/users/19/role",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"admin",
+												"users",
+												"19",
+												"role"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Methods",
+											"value": "PUT"
+										},
+										{
+											"key": "Access-Control-Allow-Headers",
+											"value": "content-type, authorization, user-agent, accept, cache-control, host, accept-encoding, connection, content-length, postman-token"
+										},
+										{
+											"key": "Access-Control-Expose-Headers",
+											"value": "content-type, authorization, user-agent, accept, cache-control, host, accept-encoding, connection, content-length, postman-token"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Date",
+											"value": "Wed, 17 Sep 2025 06:33:29 GMT"
+										},
+										{
+											"key": "Content-Length",
+											"value": "379"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"user\": {\n        \"id\": 19,\n        \"email\": \"ochomoswill@gmail.com\",\n        \"name\": \"ochomoswill\",\n        \"google_id\": \"106925395295268822541\",\n        \"role\": \"trainee\",\n        \"status\": \"approved\",\n        \"avatar_url\": \"https://lh3.googleusercontent.com/a/ACg8ocLNG01W8-1auBhKJjJf5_tbbwvU_-vI0-vsvMQy-jKukT2ISRqz=s96-c\",\n        \"created_at\": \"2025-06-17T03:41:40.502Z\",\n        \"updated_at\": \"2025-07-23T01:53:23.969Z\"\n    },\n    \"message\": \"User role updated to trainee\"\n}"
+								}
+							]
+						},
+						{
+							"name": "delete user",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/admin/users/18",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"admin",
+										"users",
+										"18"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "delete user",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{host}}/admin/users/18",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"admin",
+												"users",
+												"18"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Methods",
+											"value": "DELETE"
+										},
+										{
+											"key": "Access-Control-Allow-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Access-Control-Expose-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Date",
+											"value": "Wed, 17 Sep 2025 06:34:20 GMT"
+										},
+										{
+											"key": "Content-Length",
+											"value": "285"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"user\": {\n        \"id\": 18,\n        \"email\": \"spam.user@email.com\",\n        \"name\": \"Spam User\",\n        \"google_id\": \"google_trainee_015\",\n        \"role\": \"trainee\",\n        \"status\": \"rejected\",\n        \"avatar_url\": null,\n        \"created_at\": \"2025-06-12T02:07:03.763Z\",\n        \"updated_at\": \"2025-07-23T01:54:15.058Z\"\n    },\n    \"message\": \"User account deactivated successfully\"\n}"
+								}
+							]
+						},
+						{
+							"name": "get user profile",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/admin/users/profile",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"admin",
+										"users",
+										"profile"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "get user profile",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{host}}/admin/users/profile",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"admin",
+												"users",
+												"profile"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Methods",
+											"value": "GET"
+										},
+										{
+											"key": "Access-Control-Allow-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Access-Control-Expose-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Date",
+											"value": "Wed, 17 Sep 2025 06:35:01 GMT"
+										},
+										{
+											"key": "Content-Length",
+											"value": "144"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"user\": {\n        \"id\": 1,\n        \"email\": \"admin@training.com\",\n        \"name\": \"Admin User\",\n        \"role\": \"admin\",\n        \"status\": \"approved\"\n    },\n    \"message\": \"Profile retrieved successfully\"\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "subjects",
+					"item": [
+						{
+							"name": "get subjects",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/admin/subjects/?page=1&pageSize=10",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"admin",
+										"subjects",
+										""
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										},
+										{
+											"key": "role",
+											"value": "admin",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "get subjects",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{host}}/admin/subjects/?page=1&pageSize=10",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"admin",
+												"subjects",
+												""
+											],
+											"query": [
+												{
+													"key": "page",
+													"value": "1"
+												},
+												{
+													"key": "pageSize",
+													"value": "10"
+												},
+												{
+													"key": "role",
+													"value": "admin",
+													"disabled": true
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Methods",
+											"value": "GET"
+										},
+										{
+											"key": "Access-Control-Allow-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Access-Control-Expose-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Date",
+											"value": "Wed, 17 Sep 2025 06:35:20 GMT"
+										},
+										{
+											"key": "Content-Length",
+											"value": "2051"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"domain\": \"subjects\",\n    \"current_page\": 1,\n    \"last_page\": 1,\n    \"page_size\": 10,\n    \"total_count\": 7,\n    \"records\": [\n        {\n            \"id\": 7,\n            \"name\": \"Data Structures & Algorithms\",\n            \"description\": \"Master fundamental computer science concepts and problem-solving techniques\",\n            \"created_by\": 3,\n            \"is_active\": true,\n            \"created_at\": \"2025-06-09T02:07:03.773Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.773Z\",\n            \"created_by_name\": \"Mike Rodriguez\"\n        },\n        {\n            \"id\": 6,\n            \"name\": \"Mobile App Development\",\n            \"description\": \"Build cross-platform mobile applications using React Native\",\n            \"created_by\": 1,\n            \"is_active\": true,\n            \"created_at\": \"2025-06-07T02:07:03.773Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.773Z\",\n            \"created_by_name\": \"Admin User\"\n        },\n        {\n            \"id\": 5,\n            \"name\": \"DevOps & Deployment\",\n            \"description\": \"Master deployment strategies, CI/CD pipelines, and cloud infrastructure\",\n            \"created_by\": 2,\n            \"is_active\": true,\n            \"created_at\": \"2025-06-05T02:07:03.773Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.773Z\",\n            \"created_by_name\": \"Sarah Johnson\"\n        },\n        {\n            \"id\": 4,\n            \"name\": \"Database Design & SQL\",\n            \"description\": \"Learn database concepts, SQL queries, and database optimization techniques\",\n            \"created_by\": 3,\n            \"is_active\": true,\n            \"created_at\": \"2025-06-03T02:07:03.773Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.773Z\",\n            \"created_by_name\": \"Mike Rodriguez\"\n        },\n        {\n            \"id\": 3,\n            \"name\": \"Backend Development with Node.js\",\n            \"description\": \"Build scalable server-side applications using Node.js, Express, and databases\",\n            \"created_by\": 1,\n            \"is_active\": true,\n            \"created_at\": \"2025-06-01T02:07:03.773Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.773Z\",\n            \"created_by_name\": \"Admin User\"\n        },\n        {\n            \"id\": 2,\n            \"name\": \"React.js Development\",\n            \"description\": \"Master React.js for building interactive user interfaces and single-page applications\",\n            \"created_by\": 2,\n            \"is_active\": true,\n            \"created_at\": \"2025-05-30T02:07:03.773Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.773Z\",\n            \"created_by_name\": \"Sarah Johnson\"\n        },\n        {\n            \"id\": 1,\n            \"name\": \"Web Development Fundamentals\",\n            \"description\": \"Learn the basics of HTML, CSS, and JavaScript to build modern web applications\",\n            \"created_by\": 1,\n            \"is_active\": true,\n            \"created_at\": \"2025-05-28T02:07:03.773Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.773Z\",\n            \"created_by_name\": \"Admin User\"\n        }\n    ]\n}"
+								}
+							]
+						},
+						{
+							"name": "get single subject",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/admin/subjects/7",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"admin",
+										"subjects",
+										"7"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "get single subject",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{host}}/admin/subjects/7",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"admin",
+												"subjects",
+												"7"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Methods",
+											"value": "GET"
+										},
+										{
+											"key": "Access-Control-Allow-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Access-Control-Expose-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Date",
+											"value": "Wed, 17 Sep 2025 06:35:27 GMT"
+										},
+										{
+											"key": "Content-Length",
+											"value": "340"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"subject\": {\n        \"id\": 7,\n        \"name\": \"Data Structures & Algorithms\",\n        \"description\": \"Master fundamental computer science concepts and problem-solving techniques\",\n        \"created_by\": 3,\n        \"is_active\": true,\n        \"created_at\": \"2025-06-09T02:07:03.773Z\",\n        \"updated_at\": \"2025-06-17T02:07:03.773Z\",\n        \"created_by_name\": \"Mike Rodriguez\"\n    },\n    \"message\": \"Subject retrieved successfully\"\n}"
+								}
+							]
+						},
+						{
+							"name": "create subject",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Audits Basics\",\n    \"description\": \"The foundation concepts of Audit\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/admin/subjects/",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"admin",
+										"subjects",
+										""
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "create subject",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"name\": \"Audits Basics\",\n    \"description\": \"The foundation concepts of Audit\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{host}}/admin/subjects/",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"admin",
+												"subjects",
+												""
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Methods",
+											"value": "POST"
+										},
+										{
+											"key": "Access-Control-Allow-Headers",
+											"value": "content-type, authorization, user-agent, accept, cache-control, host, accept-encoding, connection, content-length, postman-token"
+										},
+										{
+											"key": "Access-Control-Expose-Headers",
+											"value": "content-type, authorization, user-agent, accept, cache-control, host, accept-encoding, connection, content-length, postman-token"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Date",
+											"value": "Wed, 17 Sep 2025 06:35:31 GMT"
+										},
+										{
+											"key": "Content-Length",
+											"value": "246"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"subject\": {\n        \"id\": 10,\n        \"name\": \"Audits Basics\",\n        \"description\": \"The foundation concepts of Audit\",\n        \"created_by\": 1,\n        \"is_active\": true,\n        \"created_at\": \"2025-07-23T01:55:26.130Z\",\n        \"updated_at\": \"2025-07-23T01:55:26.130Z\"\n    },\n    \"message\": \"Subject created successfully\"\n}"
+								}
+							]
+						},
+						{
+							"name": "update subject",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Audits Starter\",\n    \"description\": \"The foundation concepts of Audit\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/admin/subjects/9",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"admin",
+										"subjects",
+										"9"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "update subject",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"name\": \"Audits Starter\",\n    \"description\": \"The foundation concepts of Audit\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{host}}/admin/subjects/9",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"admin",
+												"subjects",
+												"9"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Methods",
+											"value": "PUT"
+										},
+										{
+											"key": "Access-Control-Allow-Headers",
+											"value": "content-type, authorization, user-agent, accept, cache-control, host, accept-encoding, connection, content-length, postman-token"
+										},
+										{
+											"key": "Access-Control-Expose-Headers",
+											"value": "content-type, authorization, user-agent, accept, cache-control, host, accept-encoding, connection, content-length, postman-token"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Date",
+											"value": "Wed, 17 Sep 2025 06:35:36 GMT"
+										},
+										{
+											"key": "Content-Length",
+											"value": "247"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"subject\": {\n        \"id\": 9,\n        \"name\": \"Audits Starter\",\n        \"description\": \"The foundation concepts of Audit\",\n        \"created_by\": 1,\n        \"is_active\": false,\n        \"created_at\": \"2025-06-17T23:12:18.535Z\",\n        \"updated_at\": \"2025-07-23T01:55:31.113Z\"\n    },\n    \"message\": \"Subject updated successfully\"\n}"
+								}
+							]
+						},
+						{
+							"name": "delete subject",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/admin/subjects/9",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"admin",
+										"subjects",
+										"9"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "delete subject",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{host}}/admin/subjects/9",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"admin",
+												"subjects",
+												"9"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Methods",
+											"value": "DELETE"
+										},
+										{
+											"key": "Access-Control-Allow-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Access-Control-Expose-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Date",
+											"value": "Wed, 17 Sep 2025 06:35:47 GMT"
+										},
+										{
+											"key": "Content-Length",
+											"value": "42"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"message\": \"Subject deleted successfully\"\n}"
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "tasks",
+					"item": [
+						{
+							"name": "get tasks",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/admin/tasks/?page=1&page_size=10&subject_id=2",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"admin",
+										"tasks",
+										""
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "page_size",
+											"value": "10"
+										},
+										{
+											"key": "subject_id",
+											"value": "2"
+										}
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "get tasks",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{host}}/admin/tasks/?page=1&page_size=10&subject_id=2",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"admin",
+												"tasks",
+												""
+											],
+											"query": [
+												{
+													"key": "page",
+													"value": "1"
+												},
+												{
+													"key": "page_size",
+													"value": "10"
+												},
+												{
+													"key": "subject_id",
+													"value": "2"
+												}
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Methods",
+											"value": "GET"
+										},
+										{
+											"key": "Access-Control-Allow-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Access-Control-Expose-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Date",
+											"value": "Wed, 17 Sep 2025 06:36:08 GMT"
+										},
+										{
+											"key": "Content-Length",
+											"value": "1853"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"domain\": \"subject_tasks\",\n    \"current_page\": 1,\n    \"last_page\": 1,\n    \"page_size\": 10,\n    \"total_count\": 4,\n    \"records\": [\n        {\n            \"id\": 13,\n            \"subject_id\": 2,\n            \"title\": \"Secure Session Management\",\n            \"description\": \"Implement secure session management with idle timeout\",\n            \"requirements\": \"Create: a react hook to wrap the secure routes of the application\",\n            \"due_date\": \"2025-07-23T23:07:03.794Z\",\n            \"max_score\": 100,\n            \"is_active\": true,\n            \"created_by\": 1,\n            \"created_at\": \"2025-06-21T10:24:52.363Z\",\n            \"updated_at\": \"2025-06-21T10:24:52.363Z\",\n            \"created_by_name\": \"Admin User\"\n        },\n        {\n            \"id\": 7,\n            \"subject_id\": 2,\n            \"title\": \"React Router Navigation\",\n            \"description\": \"Implement multi-page navigation using React Router\",\n            \"requirements\": \"Create: Home, About, Services, Contact pages with proper routing and navigation components\",\n            \"due_date\": \"2025-07-11T02:07:03.794Z\",\n            \"max_score\": 85,\n            \"is_active\": true,\n            \"created_by\": 2,\n            \"created_at\": \"2025-06-09T02:07:03.794Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.794Z\",\n            \"created_by_name\": \"Sarah Johnson\"\n        },\n        {\n            \"id\": 6,\n            \"subject_id\": 2,\n            \"title\": \"E-commerce Product Catalog\",\n            \"description\": \"Build a product catalog with filtering and sorting capabilities\",\n            \"requirements\": \"Include: Product grid, Search functionality, Category filters, Sort by price/name, Add to cart simulation\",\n            \"due_date\": \"2025-07-04T02:07:03.794Z\",\n            \"max_score\": 110,\n            \"is_active\": true,\n            \"created_by\": 2,\n            \"created_at\": \"2025-06-08T02:07:03.794Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.794Z\",\n            \"created_by_name\": \"Sarah Johnson\"\n        },\n        {\n            \"id\": 5,\n            \"subject_id\": 2,\n            \"title\": \"React Weather App\",\n            \"description\": \"Create a weather application using React and a weather API\",\n            \"requirements\": \"Features: Current weather display, 5-day forecast, Location search, Responsive design, Error handling\",\n            \"due_date\": \"2025-06-27T02:07:03.794Z\",\n            \"max_score\": 120,\n            \"is_active\": true,\n            \"created_by\": 2,\n            \"created_at\": \"2025-06-07T02:07:03.794Z\",\n            \"updated_at\": \"2025-06-17T02:07:03.794Z\",\n            \"created_by_name\": \"Sarah Johnson\"\n        }\n    ]\n}"
+								}
+							]
+						},
+						{
+							"name": "get single task",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{host}}/admin/tasks/7",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"admin",
+										"tasks",
+										"7"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "get single task",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{host}}/admin/tasks/7",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"admin",
+												"tasks",
+												"7"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Methods",
+											"value": "GET"
+										},
+										{
+											"key": "Access-Control-Allow-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Access-Control-Expose-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Date",
+											"value": "Wed, 17 Sep 2025 06:37:00 GMT"
+										},
+										{
+											"key": "Content-Length",
+											"value": "518"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"task\": {\n        \"id\": 7,\n        \"subject_id\": 2,\n        \"title\": \"React Router Navigation\",\n        \"description\": \"Implement multi-page navigation using React Router\",\n        \"requirements\": \"Create: Home, About, Services, Contact pages with proper routing and navigation components\",\n        \"due_date\": \"2025-07-11T02:07:03.794Z\",\n        \"max_score\": 85,\n        \"is_active\": true,\n        \"created_by\": 2,\n        \"created_at\": \"2025-06-09T02:07:03.794Z\",\n        \"updated_at\": \"2025-06-17T02:07:03.794Z\",\n        \"created_by_name\": \"Sarah Johnson\",\n        \"subject_name\": \"React.js Development\"\n    },\n    \"message\": \"Task retrieved successfully\"\n}"
+								}
+							]
+						},
+						{
+							"name": "create task",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"subject_id\": 2,\n    \"title\": \"Secure Session Management\",\n    \"description\": \"Implement secure session management with idle timeout\",\n    \"requirements\": \"Create: a react hook to wrap the secure routes of the application\",\n    \"due_date\": \"2025-07-24T02:07:03.794Z\",\n    \"max_score\": 100\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/admin/tasks/",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"admin",
+										"tasks",
+										""
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "create task",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"subject_id\": 2,\n    \"title\": \"Secure Session Management\",\n    \"description\": \"Implement secure session management with idle timeout\",\n    \"requirements\": \"Create: a react hook to wrap the secure routes of the application\",\n    \"due_date\": \"2025-07-24T02:07:03.794Z\",\n    \"max_score\": 100\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{host}}/admin/tasks/",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"admin",
+												"tasks",
+												""
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Methods",
+											"value": "POST"
+										},
+										{
+											"key": "Access-Control-Allow-Headers",
+											"value": "content-type, authorization, user-agent, accept, cache-control, host, accept-encoding, connection, content-length, postman-token"
+										},
+										{
+											"key": "Access-Control-Expose-Headers",
+											"value": "content-type, authorization, user-agent, accept, cache-control, host, accept-encoding, connection, content-length, postman-token"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Date",
+											"value": "Wed, 17 Sep 2025 06:36:53 GMT"
+										},
+										{
+											"key": "Content-Length",
+											"value": "426"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"task\": {\n        \"id\": 14,\n        \"subject_id\": 2,\n        \"title\": \"Secure Session Management\",\n        \"description\": \"Implement secure session management with idle timeout\",\n        \"requirements\": \"Create: a react hook to wrap the secure routes of the application\",\n        \"due_date\": \"2025-07-23T23:07:03.794Z\",\n        \"max_score\": 100,\n        \"is_active\": true,\n        \"created_by\": 1,\n        \"created_at\": \"2025-07-23T01:56:47.370Z\",\n        \"updated_at\": \"2025-07-23T01:56:47.370Z\"\n    },\n    \"message\": \"Task created successfully\"\n}"
+								}
+							]
+						},
+						{
+							"name": "update task",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"subject_id\": 2,\n    \"title\": \"Very Secure Session Management\",\n    \"description\": \"Implement secure session management with idle timeout\",\n    \"requirements\": \"Create: a react hook to wrap the secure routes of the application\",\n    \"due_date\": \"2025-07-11T02:07:03.794Z\",\n    \"max_score\": 100\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/admin/tasks/12",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"admin",
+										"tasks",
+										"12"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "update task",
+									"originalRequest": {
+										"method": "PUT",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"subject_id\": 2,\n    \"title\": \"Very Secure Session Management\",\n    \"description\": \"Implement secure session management with idle timeout\",\n    \"requirements\": \"Create: a react hook to wrap the secure routes of the application\",\n    \"due_date\": \"2025-07-11T02:07:03.794Z\",\n    \"max_score\": 100\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{host}}/admin/tasks/12",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"admin",
+												"tasks",
+												"12"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Methods",
+											"value": "PUT"
+										},
+										{
+											"key": "Access-Control-Allow-Headers",
+											"value": "content-type, authorization, user-agent, accept, cache-control, host, accept-encoding, connection, content-length, postman-token"
+										},
+										{
+											"key": "Access-Control-Expose-Headers",
+											"value": "content-type, authorization, user-agent, accept, cache-control, host, accept-encoding, connection, content-length, postman-token"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Date",
+											"value": "Wed, 17 Sep 2025 06:37:13 GMT"
+										},
+										{
+											"key": "Content-Length",
+											"value": "432"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"task\": {\n        \"id\": 12,\n        \"subject_id\": 2,\n        \"title\": \"Very Secure Session Management\",\n        \"description\": \"Implement secure session management with idle timeout\",\n        \"requirements\": \"Create: a react hook to wrap the secure routes of the application\",\n        \"due_date\": \"2025-07-10T23:07:03.794Z\",\n        \"max_score\": 100,\n        \"is_active\": false,\n        \"created_by\": 1,\n        \"created_at\": \"2025-06-17T23:38:29.272Z\",\n        \"updated_at\": \"2025-07-23T01:57:07.609Z\"\n    },\n    \"message\": \"Task updated successfully\"\n}"
+								}
+							]
+						},
+						{
+							"name": "delete task",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/admin/tasks/12",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"admin",
+										"tasks",
+										"12"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "delete task",
+									"originalRequest": {
+										"method": "DELETE",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{host}}/admin/tasks/12",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"admin",
+												"tasks",
+												"12"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": null,
+									"header": [
+										{
+											"key": "Access-Control-Allow-Credentials",
+											"value": "true"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Access-Control-Allow-Methods",
+											"value": "DELETE"
+										},
+										{
+											"key": "Access-Control-Allow-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Access-Control-Expose-Headers",
+											"value": "authorization, user-agent, accept, cache-control, host, accept-encoding, connection, postman-token"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Date",
+											"value": "Wed, 17 Sep 2025 06:37:23 GMT"
+										},
+										{
+											"key": "Content-Length",
+											"value": "39"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"message\": \"Task deleted successfully\"\n}"
+								}
+							]
+						}
+					]
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{Admin Bearer-Token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "host",
+			"value": ""
+		},
+		{
+			"key": "Trainee Bearer-Token",
+			"value": ""
+		},
+		{
+			"key": "Admin Bearer-Token",
+			"value": ""
+		}
+	]
+}

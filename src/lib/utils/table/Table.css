@@ -1,0 +1,339 @@
+/* Universal Table Styles */
+.universal-table {
+  --border-color: #ddd;
+  --bg-color: #fff;
+  --text-color: #333;
+  --action-bg: #f0f0f0;
+  --action-hover: #e0e0e0;
+  --modal-bg: #fff;
+  --modal-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-color);
+  color: var(--text-color);
+}
+
+/* Toolbar & Actions */
+.table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--action-bg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.toolbar-actions-left,
+.toolbar-actions-right {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.table-toolbar button,
+.table-actions .action-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.action-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.table-toolbar button:hover,
+.table-actions .action-btn:hover {
+  background: var(--action-hover);
+}
+
+.filter-btn-wrapper,
+.sort-btn-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--border-color);
+    padding-left: 1rem;
+    border-radius: 4px;
+    background: var(--bg-color);
+}
+
+.filter-btn-wrapper .action-btn,
+.sort-btn-wrapper .action-btn {
+    border: none;
+    padding-right: 1rem;
+}
+
+.badge {
+  background: #007bff;
+  color: white;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  min-width: 1rem;
+  text-align: center;
+}
+
+.clear-filters-btn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0 0.5rem 0 0;
+  cursor: pointer;
+  color: #dc3545;
+  transition: color 0.2s;
+}
+
+.clear-filters-btn:hover {
+  color: #a71d2a;
+}
+
+/* Table Core */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+th {
+  background: var(--action-bg);
+  font-weight: bold;
+}
+
+.sort-icon {
+  margin-left: 0.25rem;
+  font-size: 0.75rem;
+  vertical-align: middle;
+}
+
+/* Row Styling */
+tr {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+tr:focus, th:focus {
+  outline: 2px solid #007bff;
+  outline-offset: -2px;
+}
+
+/* Pagination */
+.table-pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 1rem;
+  background: var(--action-bg);
+  border-top: 1px solid var(--border-color);
+  gap: 1rem;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.table-pagination button {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-color);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.table-pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.table-pagination select {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-color);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  background: var(--modal-bg);
+  border-radius: 8px;
+  box-shadow: var(--modal-shadow);
+  width: 90%;
+  max-width: 700px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--action-bg);
+}
+
+.modal-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--text-color);
+}
+
+.modal-head h3 {
+  flex: 1;
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.close-btn:hover {
+  background: var(--action-hover);
+}
+
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.modal-body select,
+.modal-body input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+.sort-item,
+.filter-item {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  align-items: center;
+}
+
+.filter-item {
+  grid-template-columns: 1fr 1fr 1.5fr auto;
+  gap: 1rem;
+}
+
+.add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-btn:hover {
+  background: #218838;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.delete-btn:hover {
+  background-color: #fce8e6;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--action-bg);
+}
+
+.modal-footer button {
+  padding: 0.6rem 1.2rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.cancel-btn {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+.cancel-btn:hover {
+    background-color: var(--action-hover);
+}
+
+.apply-btn {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.apply-btn:hover {
+  background: #0056b3;
+  border-color: #0056b3;
+}
