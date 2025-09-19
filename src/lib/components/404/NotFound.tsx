@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
-import './notfound.css';
+import './NotFound.css';
 
 function NotFound() {
   const [searchQuery, setSearchQuery] = useState('');
