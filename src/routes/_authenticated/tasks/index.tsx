@@ -66,7 +66,7 @@ function TasksComponent() {
             query.append('subject_id', subjectFilter.value);
         }
 
-        const url = `${host}/admin/tasks/?${query}`;
+        const url = `${host}/api/admin/tasks/?${query}`;
         const res = await fetch(url, {
             headers: {
                 Authorization: `Bearer ${token}`,
