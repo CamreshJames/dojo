@@ -1,121 +1,109 @@
-import { createFileRoute } from '@tanstack/react-router';
+// src/routes/_authenticated/subjects/index.tsx
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { Table, TableProvider, type Column } from '@lib/utils/table/Table';
 import { useAuth } from '@lib/contexts/AuthContext';
-import { Table, TableProvider } from '@lib/utils/table/Table';
-import type { Column, RowProps } from '@lib/utils/table/Table';
-import { format } from 'date-fns';
+import { useCallback, useEffect, useState } from 'react';
 
-// Define Subject type
-interface Subject {
-    id: number;
-    name: string;
-    description: string;
-    created_by: number;
-    is_active: boolean;
-    created_at: string;
-    updated_at: string;
-    created_by_name: string;
+interface SubjectRow {
+  id: number;
+  name: string;
+  description: string;
+  created_by: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by_name: string;
+}
+
+function SubjectsIndex() {
+  const { getToken } = useAuth();
+  const navigate = useNavigate();
+  const [data, setData] = useState<SubjectRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSubjects = useCallback(async () => {
+    const token = getToken();
+    if (!token) {
+      setError('No auth token');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const query = new URLSearchParams({
+        page: '1',
+        pageSize: '5',
+      });
+
+      const response = await fetch(`${import.meta.env.VITE_HOST_URL}/admin/subjects?${query}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch subjects');
+
+      const result = await response.json();
+      setData(result.records);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, [getToken]);
+
+  useEffect(() => {
+    fetchSubjects();
+  }, [fetchSubjects]);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+  const columns: Column<SubjectRow>[] = [
+    { key: 'id', label: 'ID', sortable: true, filterable: true },
+    { key: 'name', label: 'Name', sortable: true, filterable: true },
+    { key: 'description', label: 'Description', filterable: true },
+    {
+      key: 'is_active',
+      label: 'Active',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <span style={{ color: value ? 'hsl(12, 100%, 50%)' : 'gray' }}>
+          {value ? 'Yes' : 'No'}
+        </span>
+      ),
+    },
+    { key: 'created_by_name', label: 'Created By', sortable: true, filterable: true },
+    { key: 'created_at', label: 'Created At', sortable: true },
+    { key: 'updated_at', label: 'Updated At', sortable: true },
+  ];
+
+  const getRowProps = (row: SubjectRow) => ({
+    onClick: () => navigate({ to: `/subjects/${row.id}` }),
+    className: !row.is_active ? 'row-inactive' : '',
+  });
+
+  const handleRefresh = () => {
+    setLoading(true);
+    fetchSubjects();
+  };
+
+  return (
+    <div className="subjects-index" style={{ '--primary': 'hsl(12, 100%, 50%)' } as React.CSSProperties}>
+      <h1 style={{ color: 'var(--primary)' }}>Subjects</h1>
+      <TableProvider tableId="subjects-table" initialPageSize={10}>
+        <Table<SubjectRow>
+          tableId="subjects-table"
+          data={data}
+          columns={columns}
+          onRefresh={handleRefresh}
+          getRowProps={getRowProps}
+        />
+      </TableProvider>
+    </div>
+  );
 }
 
 export const Route = createFileRoute('/_authenticated/subjects/')({
-    component: SubjectsComponent,
+  component: SubjectsIndex,
 });
-
-function SubjectsComponent() {
-    const { getToken } = useAuth();
-    const host = import.meta.env.VITE_HOST_URL;
-
-    const mapOperator = (op: string) => {
-        switch (op) {
-            case 'equals': return 'eq';
-            case 'contains': return 'contains';
-            case 'greater than': return 'gt';
-            case 'less than': return 'lt';
-            default: return op;
-        }
-    };
-
-    const dataFetcher = async (params: {
-        page: number;
-        pageSize: number;
-        sorts: { column: string; direction: 'asc' | 'desc' }[];
-        filters: { column: string; operator: string; value: string }[];
-    }) => {
-        const token = getToken();
-        if (!token) throw new Error('No auth token');
-
-        const query = new URLSearchParams({
-            page: (params.page + 1).toString(),
-            pageSize: params.pageSize.toString(),
-        });
-
-        if (params.sorts.length) {
-            query.append('sort', params.sorts.map(s => `${s.column}:${s.direction}`).join(','));
-        }
-
-        if (params.filters.length) {
-            query.append('filter', params.filters.map(f => `${f.column}:${mapOperator(f.operator)}:${f.value}`).join(','));
-        }
-
-        const url = `${host}/admin/subjects/?${query}`;
-        const res = await fetch(url, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-        if (!res.ok) throw new Error('Fetch error');
-        const json = await res.json();
-        return {
-            records: json.records,
-            total_count: json.total_count,
-            last_page: json.last_page,
-        };
-    };
-
-    const subjectColumns: Column<Subject>[] = [
-        { key: 'id', label: 'ID', sortable: true },
-        { key: 'name', label: 'Name', sortable: true, filterable: true },
-        { key: 'description', label: 'Description', filterable: true },
-        { key: 'created_by_name', label: 'Created By', sortable: true, filterable: true },
-        {
-            key: 'is_active',
-            label: 'Active',
-            render: (value) => value ? 'Yes' : 'No',
-            sortable: true,
-        },
-        {
-            key: 'created_at',
-            label: 'Created At',
-            sortable: true,
-            render: (value) => format(new Date(value), 'PPP p'),
-        },
-        {
-            key: 'updated_at',
-            label: 'Updated At',
-            sortable: true,
-            render: (value) => format(new Date(value), 'PPP p'),
-        },
-    ];
-
-    const getSubjectRowProps = (row: Subject): RowProps<Subject> => ({
-        className: row.is_active ? 'active-row' : 'inactive-row',
-        onClick: () => console.log('Clicked subject:', row),
-    });
-
-    return (
-        <div className="route-container">
-            <h1>Subjects</h1>
-            <TableProvider tableId="subjects-table">
-                <Table<Subject>
-                    tableId="subjects-table"
-                    dataFetcher={dataFetcher}
-                    columns={subjectColumns}
-                    getRowProps={getSubjectRowProps}
-                    pageSize={10}
-                    showToolbar
-                    showPagination
-                    className="subjects-table"
-                />
-            </TableProvider>
-        </div>
-    );
-}

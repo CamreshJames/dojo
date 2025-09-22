@@ -1,131 +1,203 @@
-import { createFileRoute, useNavigate,useParams } from '@tanstack/react-router';
+// src/routes/_authenticated/subjects/$subjectId.tsx
+import { createFileRoute, useParams, useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@lib/contexts/AuthContext';
-import Form from '@lib/utils/Form';
 import { useEffect, useState } from 'react';
-import type { Field } from '@lib/utils/Form';
+import { createApiClient } from '@lib/utils/api';
+import EditableField from '@lib/components/EditableField';
 
-// Subject type
 interface Subject {
-    id: number;
-    name: string;
-    description: string;
-    created_by: number;
-    is_active: boolean;
-    created_at: string;
-    updated_at: string;
-    created_by_name: string;
+  id: number;
+  name: string;
+  description: string;
+  created_by: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by_name: string;
+}
+
+function SubjectDetail() {
+  const { subjectId } = useParams({ from: '/_authenticated/subjects/$subjectId' });
+  const { getToken } = useAuth();
+  const navigate = useNavigate();
+  const [subject, setSubject] = useState<Subject | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  const apiClient = createApiClient(import.meta.env.VITE_HOST_URL);
+
+  useEffect(() => {
+    const fetchSubject = async () => {
+      const token = getToken();
+      if (!token) {
+        setError('No auth token');
+        setLoading(false);
+        return;
+      }
+
+      const response = await apiClient.get(`/admin/subjects/${subjectId}`, { token });
+      
+      if (response.success) {
+        setSubject(response.data.subject);
+      } else {
+        setError(response.error || 'Failed to fetch subject');
+      }
+      setLoading(false);
+    };
+    
+    fetchSubject();
+  }, [subjectId, getToken]);
+
+  const handleFieldUpdate = (field: keyof Subject) => async (value: any): Promise<boolean> => {
+    if (!subject) return false;
+    
+    const token = getToken();
+    if (!token) return false;
+
+    const response = await apiClient.patch(`/admin/subjects/${subjectId}`, 
+      { [field]: value }, 
+      { token }
+    );
+
+    if (response.success) {
+      setSubject(prev => prev ? { ...prev, [field]: value } : null);
+      return true;
+    }
+    
+    return false;
+  };
+
+  if (loading) {
+    return (
+      <div className="loading" style={{ textAlign: 'center', padding: '2rem' }}>
+        <div className="loading-spinner" style={{
+          width: '40px',
+          height: '40px',
+          border: '3px solid #ddd',
+          borderTop: '3px solid hsl(12, 100%, 50%)',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          margin: '0 auto',
+        }}></div>
+        <p>Loading subject data...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="error" style={{
+        padding: '1rem',
+        background: '#f8d7da',
+        color: '#721c24',
+        borderRadius: '4px',
+        margin: '1rem',
+        textAlign: 'center',
+      }}>
+        Error: {error}
+      </div>
+    );
+  }
+
+  if (!subject) {
+    return (
+      <div className="not-found" style={{ textAlign: 'center', padding: '2rem' }}>
+        Subject not found
+      </div>
+    );
+  }
+
+  const activeOptions = [
+    { value: 'true', label: 'Active' },
+    { value: 'false', label: 'Inactive' },
+  ];
+
+  return (
+    <div className="subject-detail" style={{
+      '--primary': 'hsl(12, 100%, 50%)',
+      '--primary-light': 'hsl(12, 100%, 90%)',
+      '--primary-dark': 'hsl(12, 100%, 30%)',
+      maxWidth: '800px',
+      margin: '2rem auto',
+      padding: '0 1rem',
+    } as React.CSSProperties}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '1.5rem',
+      }}>
+        <h1 style={{ color: 'var(--primary)', fontSize: '1.8rem', margin: 0 }}>
+          <EditableField
+            value={subject.name}
+            onSave={handleFieldUpdate('name')}
+            validation={(value) => !value ? 'Name is required' : null}
+          />
+        </h1>
+        <button
+          onClick={() => navigate({ to: '/subjects' })}
+          style={{
+            padding: '0.5rem 1rem',
+            background: 'var(--primary)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+            transition: 'background 0.2s',
+          }}
+          onMouseOver={(e) => (e.currentTarget.style.background = 'var(--primary-dark)')}
+          onMouseOut={(e) => (e.currentTarget.style.background = 'var(--primary)')}
+        >
+          Back to Subjects
+        </button>
+      </div>
+
+      <div className="subject-card" style={{
+        background: '#fff',
+        borderRadius: '8px',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+        padding: '2rem',
+      }}>
+        <div className="status-section" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+          <EditableField
+            value={String(subject.is_active)}
+            onSave={(value) => handleFieldUpdate('is_active')(value === 'true')}
+            type="select"
+            options={activeOptions}
+          />
+        </div>
+
+        <div className="details-section">
+          <div className="detail-item" style={{ marginBottom: '1rem' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Description</h3>
+            <EditableField
+              value={subject.description || 'No description'}
+              onSave={handleFieldUpdate('description')}
+              type="textarea"
+            />
+          </div>
+          
+          <div className="detail-item" style={{ marginBottom: '1rem' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Created By</h3>
+            <p style={{ margin: 0, color: '#333', fontSize: '1rem' }}>{subject.created_by_name}</p>
+          </div>
+          
+          <div className="detail-item" style={{ marginBottom: '1rem' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Created</h3>
+            <p style={{ margin: 0, color: '#333', fontSize: '1rem' }}>{new Date(subject.created_at).toLocaleString()}</p>
+          </div>
+          
+          <div className="detail-item">
+            <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Updated</h3>
+            <p style={{ margin: 0, color: '#333', fontSize: '1rem' }}>{new Date(subject.updated_at).toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export const Route = createFileRoute('/_authenticated/subjects/$subjectId')({
-    component: SubjectDetailComponent,
+  component: SubjectDetail,
 });
-
-function SubjectDetailComponent() {
-    // Explicitly define the params type
-    const { subjectId } = useParams({ from: '/_authenticated/subjects/$subjectId' });
-    const { getToken } = useAuth();
-    const navigate = useNavigate();
-    const host = import.meta.env.VITE_HOST_URL;
-
-    const [subject, setSubject] = useState<Subject | null>(null);
-    const [mode, setMode] = useState<'view' | 'edit' | 'create'>('view');
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const isNew = subjectId === 'new';
-
-    useEffect(() => {
-        if (isNew) {
-            setMode('create');
-            setSubject({
-                id: 0,
-                name: '',
-                description: '',
-                created_by: 0,
-                is_active: true,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                created_by_name: '',
-            });
-            setLoading(false);
-            return;
-        }
-
-        const fetchSubject = async () => {
-            const token = getToken();
-            if (!token) {
-                setError('No auth token');
-                setLoading(false);
-                return;
-            }
-
-            try {
-                const res = await fetch(`${host}/admin/subjects/${subjectId}`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                if (!res.ok) throw new Error('Fetch error');
-                const json = await res.json();
-                setSubject(json);
-                setMode('view');
-            } catch (err) {
-                setError('Failed to load subject');
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchSubject();
-    }, [subjectId, isNew, getToken, host]);
-
-    const handleSubmit = async (values: Subject) => {
-        const token = getToken();
-        if (!token) throw new Error('No auth token');
-
-        const method = isNew ? 'POST' : 'PUT';
-        const url = isNew ? `${host}/admin/subjects/` : `${host}/admin/subjects/${subjectId}`;
-
-        const res = await fetch(url, {
-            method,
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(values),
-        });
-        if (!res.ok) throw new Error('Submit error');
-
-        const newSubject = await res.json();
-        navigate({ to: `/subjects/${newSubject.id || subjectId}` });
-        setMode('view');
-    };
-
-    const subjectFields: Field<Subject>[] = [
-        { name: 'name', label: 'Name', type: 'text', validation: v => v ? null : 'Required' },
-        { name: 'description', label: 'Description', type: 'textarea' },
-        { name: 'is_active', label: 'Active', type: 'checkbox' },
-        { name: 'created_by_name', label: 'Created By', type: 'text', disabled: true },
-        { name: 'created_at', label: 'Created At', type: 'text', disabled: true },
-        { name: 'updated_at', label: 'Updated At', type: 'text', disabled: true },
-    ];
-
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div>{error}</div>;
-    if (!subject) return <div>Subject not found</div>;
-
-    return (
-        <div>
-            <h1>{isNew ? 'Create Subject' : `Subject: ${subject.name}`}</h1>
-            <Form<Subject>
-                fields={subjectFields}
-                initialValues={subject}
-                onSubmit={handleSubmit}
-                mode={mode}
-                submitLabel={isNew ? 'Create' : 'Save'}
-            />
-            {mode === 'view' && !isNew && (
-                <button onClick={() => setMode('edit')}>Edit</button>
-            )}
-        </div>
-    );
-}

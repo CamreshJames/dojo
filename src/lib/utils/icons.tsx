@@ -66,33 +66,33 @@ export function SettingIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElem
 }
 
 export function UsersIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <path d="M10 10C12.7614 10 15 7.76142 15 5C15 2.23858 12.7614 0 10 0C7.23858 0 5 2.23858 5 5C5 7.76142 7.23858 10 10 10Z" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M3 20C3 16.134 6.13401 13 10 13C13.866 13 17 16.134 17 20" stroke="currentColor" strokeWidth="1.5"/>
-    </svg>
-  );
+    return (
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+            <path d="M10 10C12.7614 10 15 7.76142 15 5C15 2.23858 12.7614 0 10 0C7.23858 0 5 2.23858 5 5C5 7.76142 7.23858 10 10 10Z" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M3 20C3 16.134 6.13401 13 10 13C13.866 13 17 16.134 17 20" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+    );
 }
 
 export function TasksIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <path d="M1 4H19M1 10H19M1 16H19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <path d="M4 2.5L4 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <path d="M4 8.5L4 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <path d="M4 14.5L4 17.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
-  );
+    return (
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+            <path d="M1 4H19M1 10H19M1 16H19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M4 2.5L4 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M4 8.5L4 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M4 14.5L4 17.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+    );
 }
 
 export function SubjectsIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <path d="M2 4H18V16H2V4Z" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M10 4V16" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M2 8H18" stroke="currentColor" strokeWidth="1.5"/>
-    </svg>
-  );
+    return (
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+            <path d="M2 4H18V16H2V4Z" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M10 4V16" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M2 8H18" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+    );
 }
 
 export function OrganizationIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
@@ -204,8 +204,18 @@ export function SuccessIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElem
         <>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
                 <circle cx="8" cy="8" r="7" stroke="green" strokeWidth="1.5" />
-                <path d="M5 8.5L7 10.5L11 6.5" stroke="green" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M5 8.5L7 10.5L11 6.5" stroke="green" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
         </>
     )
+}
+
+export function EditIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
+    return (
+        <svg viewBox="0 0 16 16" width="16" height="16" xmlns="http://www.w3.org/2000/svg" {...props}>
+            <path
+                d="M12.146 2.146a.5.5 0 0 1 .708 0l1 1a.5.5 0 0 1 0 .708l-8.5 8.5a.5.5 0 0 1-.168.11l-3 1a.5.5 0 0 1-.65-.65l1-3a.5.5 0 0 1 .11-.168l8.5-8.5zM11.207 3.5L4 10.707V12h1.293L13.5 4.793 11.207 2.5 11.207 3.5z"
+            />
+        </svg>
+    );
 }

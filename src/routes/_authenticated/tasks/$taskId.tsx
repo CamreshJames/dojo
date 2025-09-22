@@ -1,143 +1,195 @@
-import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router';
+// src/routes/_authenticated/tasks/$taskId.tsx
+import { createFileRoute, useParams, useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@lib/contexts/AuthContext';
-import Form from '@lib/utils/Form';
 import { useEffect, useState } from 'react';
-import type { Field } from '@lib/utils/Form';
 
-// Task type
 interface Task {
-    id: number;
-    subject_id: number;
-    title: string;
-    description: string;
-    requirements: string;
-    due_date: string;
-    max_score: number;
-    is_active: boolean;
-    created_by: number;
-    created_at: string;
-    updated_at: string;
-    created_by_name: string;
+  id: number;
+  subject_id: number;
+  title: string;
+  description: string;
+  requirements: string;
+  due_date: string;
+  max_score: number;
+  is_active: boolean;
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+  created_by_name: string;
+  subject_name?: string; // Optional subject name from response
+}
+
+function TaskDetail() {
+  const { taskId } = useParams({ from: '/_authenticated/tasks/$taskId' });
+  const { getToken } = useAuth();
+  const navigate = useNavigate();
+  const [task, setTask] = useState<Task | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTask = async () => {
+      const token = getToken();
+      if (!token) {
+        setError('No auth token');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${import.meta.env.VITE_HOST_URL}/admin/tasks/${taskId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!response.ok) throw new Error('Failed to fetch task');
+        const data = await response.json();
+        setTask(data.task); // Extract nested task object from response
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTask();
+  }, [taskId, getToken]);
+
+  if (loading) {
+    return (
+      <div className="loading" style={{ textAlign: 'center', padding: '2rem' }}>
+        <div className="loading-spinner" style={{
+          width: '40px',
+          height: '40px',
+          border: '3px solid #ddd',
+          borderTop: '3px solid hsl(12, 100%, 50%)',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          margin: '0 auto',
+        }}></div>
+        <p>Loading task data...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="error" style={{
+        padding: '1rem',
+        background: '#f8d7da',
+        color: '#721c24',
+        borderRadius: '4px',
+        margin: '1rem',
+        textAlign: 'center',
+      }}>
+        Error: {error}
+      </div>
+    );
+  }
+
+  if (!task) {
+    return (
+      <div className="not-found" style={{ textAlign: 'center', padding: '2rem' }}>
+        Task not found
+      </div>
+    );
+  }
+
+  return (
+    <div className="task-detail" style={{
+      '--primary': 'hsl(12, 100%, 50%)',
+      '--primary-light': 'hsl(12, 100%, 90%)',
+      '--primary-dark': 'hsl(12, 100%, 30%)',
+      maxWidth: '800px',
+      margin: '2rem auto',
+      padding: '0 1rem',
+    } as React.CSSProperties}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '1.5rem',
+      }}>
+        <h1 style={{ color: 'var(--primary)', fontSize: '1.8rem', margin: 0 }}>
+          {task.title}
+        </h1>
+        <button
+          onClick={() => navigate({ to: '/tasks' })}
+          style={{
+            padding: '0.5rem 1rem',
+            background: 'var(--primary)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '0.9rem',
+            transition: 'background 0.2s',
+          }}
+          onMouseOver={(e) => (e.currentTarget.style.background = 'var(--primary-dark)')}
+          onMouseOut={(e) => (e.currentTarget.style.background = 'var(--primary)')}
+        >
+          Back to Tasks
+        </button>
+      </div>
+
+      <div className="task-card" style={{
+        background: '#fff',
+        borderRadius: '8px',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+        padding: '2rem',
+      }}>
+        <div className="status-section" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+          <span style={{
+            display: 'inline-block',
+            padding: '0.25rem 0.75rem',
+            borderRadius: '12px',
+            background: task.is_active ? 'var(--primary-light)' : '#f8d7da',
+            color: task.is_active ? 'var(--primary-dark)' : '#721c24',
+            fontSize: '0.85rem',
+            fontWeight: '500',
+          }}>
+            {task.is_active ? 'Active' : 'Inactive'}
+          </span>
+        </div>
+
+        <div className="details-section">
+          {task.subject_name && (
+            <div className="detail-item" style={{ marginBottom: '1rem' }}>
+              <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Subject</h3>
+              <p style={{ margin: 0, color: '#333', fontSize: '1rem' }}>{task.subject_name}</p>
+            </div>
+          )}
+          <div className="detail-item" style={{ marginBottom: '1rem' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Description</h3>
+            <p style={{ margin: 0, color: '#333', fontSize: '1rem' }}>{task.description || 'No description'}</p>
+          </div>
+          <div className="detail-item" style={{ marginBottom: '1rem' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Requirements</h3>
+            <p style={{ margin: 0, color: '#333', fontSize: '1rem' }}>{task.requirements || 'No requirements'}</p>
+          </div>
+          <div className="detail-item" style={{ marginBottom: '1rem' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Due Date</h3>
+            <p style={{ margin: 0, color: '#333', fontSize: '1rem' }}>{new Date(task.due_date).toLocaleString()}</p>
+          </div>
+          <div className="detail-item" style={{ marginBottom: '1rem' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Max Score</h3>
+            <p style={{ margin: 0, color: '#333', fontSize: '1rem' }}>{task.max_score}</p>
+          </div>
+          <div className="detail-item" style={{ marginBottom: '1rem' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Created By</h3>
+            <p style={{ margin: 0, color: '#333', fontSize: '1rem' }}>{task.created_by_name}</p>
+          </div>
+          <div className="detail-item" style={{ marginBottom: '1rem' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Created</h3>
+            <p style={{ margin: 0, color: '#333', fontSize: '1rem' }}>{new Date(task.created_at).toLocaleString()}</p>
+          </div>
+          <div className="detail-item">
+            <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Updated</h3>
+            <p style={{ margin: 0, color: '#333', fontSize: '1rem' }}>{new Date(task.updated_at).toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export const Route = createFileRoute('/_authenticated/tasks/$taskId')({
-    component: TaskDetailComponent,
+  component: TaskDetail,
 });
-
-function TaskDetailComponent() {
-    // Explicitly define the params type
-    const { taskId } = useParams({ from: '/_authenticated/tasks/$taskId' });
-    const { getToken } = useAuth();
-    const navigate = useNavigate();
-    const host = import.meta.env.VITE_HOST_URL;
-
-    const [task, setTask] = useState<Task | null>(null);
-    const [mode, setMode] = useState<'view' | 'edit' | 'create'>('view');
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const isNew = taskId === 'new';
-
-    useEffect(() => {
-        if (isNew) {
-            setMode('create');
-            setTask({
-                id: 0,
-                subject_id: 0,
-                title: '',
-                description: '',
-                requirements: '',
-                due_date: new Date().toISOString(),
-                max_score: 100,
-                is_active: true,
-                created_by: 0,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                created_by_name: '',
-            });
-            setLoading(false);
-            return;
-        }
-
-        const fetchTask = async () => {
-            const token = getToken();
-            if (!token) {
-                setError('No auth token');
-                setLoading(false);
-                return;
-            }
-
-            try {
-                const res = await fetch(`${host}/admin/tasks/${taskId}`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                if (!res.ok) throw new Error('Fetch error');
-                const json = await res.json();
-                setTask(json);
-                setMode('view');
-            } catch (err) {
-                setError('Failed to load task');
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchTask();
-    }, [taskId, isNew, getToken, host]);
-
-    const handleSubmit = async (values: Task) => {
-        const token = getToken();
-        if (!token) throw new Error('No auth token');
-
-        const method = isNew ? 'POST' : 'PUT';
-        const url = isNew ? `${host}/admin/tasks/` : `${host}/admin/tasks/${taskId}`;
-
-        const res = await fetch(url, {
-            method,
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(values),
-        });
-        if (!res.ok) throw new Error('Submit error');
-
-        const newTask = await res.json();
-        navigate({ to: `/tasks/${newTask.id || taskId}` });
-        setMode('view');
-    };
-
-    const taskFields: Field<Task>[] = [
-        { name: 'title', label: 'Title', type: 'text', validation: v => v ? null : 'Required' },
-        { name: 'description', label: 'Description', type: 'textarea' },
-        { name: 'requirements', label: 'Requirements', type: 'textarea' },
-        { name: 'due_date', label: 'Due Date', type: 'date' },
-        { name: 'max_score', label: 'Max Score', type: 'number', validation: v => Number(v) > 0 ? null : 'Positive number required' },
-        { name: 'is_active', label: 'Active', type: 'checkbox' },
-        { name: 'subject_id', label: 'Subject ID', type: 'number', validation: v => Number(v) > 0 ? null : 'Required' },
-        { name: 'created_by_name', label: 'Created By', type: 'text', disabled: true },
-        { name: 'created_at', label: 'Created At', type: 'text', disabled: true },
-        { name: 'updated_at', label: 'Updated At', type: 'text', disabled: true },
-    ];
-
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div>{error}</div>;
-    if (!task) return <div>Task not found</div>;
-
-    return (
-        <div>
-            <h1>{isNew ? 'Create Task' : `Task: ${task.title}`}</h1>
-            <Form<Task>
-                fields={taskFields}
-                initialValues={task}
-                onSubmit={handleSubmit}
-                mode={mode}
-                submitLabel={isNew ? 'Create' : 'Save'}
-            />
-            {mode === 'view' && !isNew && (
-                <button onClick={() => setMode('edit')}>Edit</button>
-            )}
-        </div>
-    );
-}

@@ -1,6 +1,391 @@
-import { createContext, useState, useEffect, useCallback, useContext } from 'react';
+import { createContext, useState, useEffect, useCallback, useContext, useMemo, useRef } from 'react';
 import type { ReactNode } from 'react';
-import './Table.css';
+
+// Inline CSS
+const styles = `
+/* Universal Table Styles */
+.universal-table {
+  --border-color: #ddd;
+  --bg-color: #fff;
+  --text-color: #333;
+  --action-bg: #f0f0f0;
+  --action-hover: #e0e0e0;
+  --modal-bg: #fff;
+  --modal-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-color);
+  color: var(--text-color);
+}
+
+/* Loading overlay */
+.table-loading {
+  position: relative;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255,255,255,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top: 3px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error message */
+.table-error {
+  padding: 1rem;
+  background: #f8d7da;
+  color: #721c24;
+  border-left: 4px solid #dc3545;
+  margin: 1rem;
+  border-radius: 4px;
+}
+
+/* Toolbar & Actions */
+.table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--action-bg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.toolbar-actions-left,
+.toolbar-actions-right {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.table-toolbar button,
+.table-actions .action-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border-color);
+  background: var(--bg-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.action-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.table-toolbar button:hover,
+.table-actions .action-btn:hover {
+  background: var(--action-hover);
+}
+
+.filter-btn-wrapper,
+.sort-btn-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--border-color);
+    padding-left: 1rem;
+    border-radius: 4px;
+    background: var(--bg-color);
+}
+
+.filter-btn-wrapper .action-btn,
+.sort-btn-wrapper .action-btn {
+    border: none;
+    padding-right: 1rem;
+}
+
+.badge {
+  background: #007bff;
+  color: white;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  min-width: 1rem;
+  text-align: center;
+}
+
+.clear-filters-btn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0 0.5rem 0 0;
+  cursor: pointer;
+  color: #dc3545;
+  transition: color 0.2s;
+}
+
+.clear-filters-btn:hover {
+  color: #a71d2a;
+}
+
+/* Table Core */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+th {
+  background: var(--action-bg);
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sort-indicator {
+  margin-left: 0.25rem;
+  font-size: 0.75rem;
+  vertical-align: middle;
+}
+
+/* Row Styling */
+tr {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+tr:focus, th:focus {
+  outline: 2px solid #007bff;
+  outline-offset: -2px;
+}
+
+/* Pagination */
+.table-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--action-bg);
+  border-top: 1px solid var(--border-color);
+  gap: 1rem;
+}
+
+.pagination-info {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.table-pagination button {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-color);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.table-pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.table-pagination select {
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--bg-color);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  background: var(--modal-bg);
+  border-radius: 8px;
+  box-shadow: var(--modal-shadow);
+  width: 90%;
+  max-width: 700px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--action-bg);
+}
+
+.modal-head h3 {
+  flex: 1;
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.close-btn:hover {
+  background: var(--action-hover);
+}
+
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.modal-body select,
+.modal-body input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+.sort-item,
+.filter-item {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  align-items: center;
+}
+
+.filter-item {
+  grid-template-columns: 1fr 1fr 1.5fr auto;
+  gap: 1rem;
+}
+
+.add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-btn:hover {
+  background: #218838;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.delete-btn:hover {
+  background-color: #fce8e6;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--action-bg);
+}
+
+.modal-footer button {
+  padding: 0.6rem 1.2rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.cancel-btn {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+.cancel-btn:hover {
+    background-color: var(--action-hover);
+}
+
+.apply-btn {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.apply-btn:hover {
+  background: #0056b3;
+  border-color: #0056b3;
+}
+`;
 
 // Icons
 export function AddIcon() {
@@ -51,7 +436,7 @@ function CancelModalIcon() {
     );
 }
 
-// Types
+// Core types
 export interface Column<T> {
     key: keyof T | string;
     label: string;
@@ -65,107 +450,85 @@ export interface RowProps<T> {
     onClick?: (row: T) => void;
 }
 
-export interface TableProps<T> {
-    tableId: string;
-    data?: T[];
-    dataFetcher?: (params: {
-        page: number;
-        pageSize: number;
-        sorts: Sort[];
-        filters: Filter[];
-    }) => Promise<{
-        records: T[];
-        total_count: number;
-        last_page: number;
-    }>;
-    columns: Column<T>[];
-    getRowProps?: (row: T) => RowProps<T>;
-    onRefresh?: () => void;
-    pageSize?: number;
-    showToolbar?: boolean;
-    showPagination?: boolean;
-    className?: string;
-}
-
-interface Sort {
+export interface Sort {
     column: string;
     direction: 'asc' | 'desc';
 }
 
-interface Filter {
+export interface Filter {
     column: string;
-    operator: 'equals' | 'contains' | 'greater than' | 'less than';
+    operator: 'equals' | 'contains' | 'greater_than' | 'less_than';
     value: string;
 }
 
-interface TableState {
-    sorts: Sort[];
-    filters: Filter[];
-    pageIndex: number;
-    pageCount: number;
-    currentPageSize: number;
+// Table operation handlers
+export interface TableOperations {
+    onSort?: (sorts: Sort[]) => void;
+    onFilter?: (filters: Filter[]) => void;
+    onPageChange?: (page: number) => void;
+    onPageSizeChange?: (pageSize: number) => void;
+}
+
+export interface TableProps<T> {
+    tableId: string;
+    data: T[];
+    columns: Column<T>[];
+    loading?: boolean;
+    error?: string | null;
+
+    // Pagination props
+    currentPage?: number;
+    totalPages?: number;
+    totalCount?: number;
+    pageSize?: number;
+
+    // UI customization
+    getRowProps?: (row: T) => RowProps<T>;
+    onRefresh?: () => void;
+    showToolbar?: boolean;
+    showPagination?: boolean;
+    className?: string;
+
+    // Server-side operations
+    operations?: TableOperations;
 }
 
 // Context for table state
-const TableContext = createContext<{
+interface TableContextValue {
     sorts: Sort[];
     setSorts: React.Dispatch<React.SetStateAction<Sort[]>>;
     filters: Filter[];
     setFilters: React.Dispatch<React.SetStateAction<Filter[]>>;
     pageIndex: number;
     setPageIndex: React.Dispatch<React.SetStateAction<number>>;
-    pageCount: number;
-    setPageCount: React.Dispatch<React.SetStateAction<number>>;
     currentPageSize: number;
     setCurrentPageSize: React.Dispatch<React.SetStateAction<number>>;
-} | undefined>(undefined);
+}
+
+const TableContext = createContext<TableContextValue | undefined>(undefined);
 
 const useTableContext = () => {
     const context = useContext(TableContext);
     if (!context) {
-        console.error(
-            'useTableContext must be used within TableProvider. Ensure the Table component is wrapped with TableProvider for tableId.'
-        );
-        console.trace(); // Log stack trace for debugging
         throw new Error('useTableContext must be used within TableProvider');
     }
     return context;
 };
 
-// Provider for table state with persistence
-function TableProvider({ tableId, children }: { tableId: string; children: ReactNode }) {
-    const storageKey = `${tableId}-table-state`;
-
-    const loadState = (): TableState => {
-        const saved = localStorage.getItem(storageKey);
-        if (saved) {
-            try {
-                return JSON.parse(saved);
-            } catch {
-                // Invalid JSON, reset
-            }
-        }
-        return {
-            sorts: [],
-            filters: [],
-            pageIndex: 0,
-            pageCount: 1,
-            currentPageSize: 10,
-        };
-    };
-
-    const [sorts, setSorts] = useState<Sort[]>(loadState().sorts);
-    const [filters, setFilters] = useState<Filter[]>(loadState().filters);
-    const [pageIndex, setPageIndex] = useState<number>(loadState().pageIndex);
-    const [pageCount, setPageCount] = useState<number>(loadState().pageCount);
-    const [currentPageSize, setCurrentPageSize] = useState<number>(loadState().currentPageSize);
-
-    useEffect(() => {
-        localStorage.setItem(
-            storageKey,
-            JSON.stringify({ sorts, filters, pageIndex, pageCount, currentPageSize })
-        );
-    }, [sorts, filters, pageIndex, pageCount, currentPageSize, storageKey]);
+// Table Provider
+export function TableProvider({
+    // tableId, 
+    children,
+    initialPageSize = 10
+}: {
+    tableId: string;
+    children: ReactNode;
+    initialPageSize?: number;
+}) {
+    const [sorts, setSorts] = useState<Sort[]>([]);
+    const [filters, setFilters] = useState<Filter[]>([]);
+    const [pageIndex, setPageIndex] = useState<number>(0);
+    const [currentPageSize, setCurrentPageSize] = useState<number>(initialPageSize);
 
     return (
         <TableContext.Provider
@@ -176,8 +539,6 @@ function TableProvider({ tableId, children }: { tableId: string; children: React
                 setFilters,
                 pageIndex,
                 setPageIndex,
-                pageCount,
-                setPageCount,
                 currentPageSize,
                 setCurrentPageSize,
             }}
@@ -189,90 +550,118 @@ function TableProvider({ tableId, children }: { tableId: string; children: React
 
 // Main Table component
 function Table<T extends object>({
-    data: propData,
-    dataFetcher,
+    data,
     columns,
+    loading = false,
+    error = null,
+    currentPage = 0,
+    totalPages = 1,
+    totalCount = 0,
+    pageSize = 10,
     getRowProps,
     onRefresh,
-    pageSize = 10,
     showToolbar = true,
     showPagination = true,
     className = '',
+    operations
 }: TableProps<T>) {
-    try {
-        const {
-            sorts,
-            setSorts,
-            filters,
-            setFilters,
-            pageIndex,
-            setPageIndex,
-            pageCount,
-            setPageCount,
-            currentPageSize,
-            setCurrentPageSize,
-        } = useTableContext();
+    const {
+        sorts,
+        setSorts,
+        filters,
+        setFilters,
+        pageIndex,
+        setPageIndex,
+        currentPageSize,
+        setCurrentPageSize,
+    } = useTableContext();
 
-        const [internalData, setInternalData] = useState<T[]>([]);
-        const [loading, setLoading] = useState(false);
-        const [error, setError] = useState<string | null>(null);
-        const [sortModalOpen, setSortModalOpen] = useState(false);
-        const [filterModalOpen, setFilterModalOpen] = useState(false);
+    const [sortModalOpen, setSortModalOpen] = useState(false);
+    const [filterModalOpen, setFilterModalOpen] = useState(false);
 
-        const data = dataFetcher ? internalData : (propData || []);
+    // Track previous operation calls to prevent unnecessary re-calls
+    const lastOperationCall = useRef<{
+        sorts?: Sort[];
+        filters?: Filter[];
+        page?: number;
+        pageSize?: number;
+    }>({});
 
-        // Fetch data if dataFetcher is provided
-        const fetchData = useCallback(async () => {
-            if (!dataFetcher) return;
-
-            setLoading(true);
-            setError(null);
-            try {
-                const response = await dataFetcher({
-                    page: pageIndex,
-                    pageSize: currentPageSize,
-                    sorts,
-                    filters,
-                });
-                setInternalData(response.records);
-                setPageCount(response.last_page);
-            } catch (err) {
-                setError('Failed to fetch data. Please try again.');
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        }, [dataFetcher, pageIndex, currentPageSize, sorts, filters, setPageCount]);
-
-        useEffect(() => {
-            fetchData();
-        }, [fetchData]);
-
-        useEffect(() => {
+    // Sync page size with prop
+    useEffect(() => {
+        if (currentPageSize !== pageSize) {
             setCurrentPageSize(pageSize);
-        }, [pageSize, setCurrentPageSize]);
+        }
+    }, [pageSize, currentPageSize, setCurrentPageSize]);
 
-        // Local sorting if no dataFetcher
-        const sortedData = useCallback(() => {
-            if (dataFetcher || sorts.length === 0) return data;
+    // Sync page index with prop
+    useEffect(() => {
+        if (pageIndex !== currentPage) {
+            setPageIndex(currentPage);
+        }
+    }, [currentPage, pageIndex, setPageIndex]);
 
-            return [...data].sort((a, b) => {
-                for (const { column, direction } of sorts) {
-                    const valA = a[column as keyof T];
-                    const valB = b[column as keyof T];
-                    if (valA < valB) return direction === 'asc' ? -1 : 1;
-                    if (valA > valB) return direction === 'asc' ? 1 : -1;
+    // Handle operations with debouncing to prevent unnecessary calls
+    useEffect(() => {
+        if (!operations) return;
+
+        const current = { sorts, filters, page: pageIndex, pageSize: currentPageSize };
+        const last = lastOperationCall.current;
+
+        if (JSON.stringify(current.sorts) !== JSON.stringify(last.sorts) && operations.onSort) {
+            operations.onSort(sorts);
+        }
+
+        if (JSON.stringify(current.filters) !== JSON.stringify(last.filters) && operations.onFilter) {
+            operations.onFilter(filters);
+        }
+
+        if (current.page !== last.page && operations.onPageChange) {
+            operations.onPageChange(pageIndex);
+        }
+
+        if (current.pageSize !== last.pageSize && operations.onPageSizeChange) {
+            operations.onPageSizeChange(currentPageSize);
+        }
+
+        lastOperationCall.current = current;
+    }, [sorts, filters, pageIndex, currentPageSize, operations]);
+
+    // Handle column sorting
+    const handleColumnSort = useCallback((columnKey: string) => {
+        setSorts(prev => {
+            const existingIndex = prev.findIndex(s => s.column === columnKey);
+
+            if (existingIndex >= 0) {
+                const existing = prev[existingIndex];
+                if (existing.direction === 'asc') {
+                    return prev.map((s, i) =>
+                        i === existingIndex ? { ...s, direction: 'desc' } : s
+                    );
+                } else {
+                    return prev.filter((_, i) => i !== existingIndex);
                 }
-                return 0;
-            });
-        }, [data, sorts, dataFetcher]);
+            } else {
+                return [...prev, { column: columnKey, direction: 'asc' }];
+            }
+        });
+    }, [setSorts]);
 
-        // Local filtering if no dataFetcher
-        const filteredData = useCallback(() => {
-            const dataToFilter = sortedData();
-            if (dataFetcher || filters.length === 0) return dataToFilter;
+    // Get sort indicator for column
+    const getSortIndicator = useCallback((columnKey: string) => {
+        const sort = sorts.find(s => s.column === columnKey);
+        return sort ? (sort.direction === 'asc' ? '↑' : '↓') : '';
+    }, [sorts]);
 
-            return dataToFilter.filter(row => {
+    // Client-side data processing (fallback when no operations provided)
+    const processedData = useMemo(() => {
+        if (operations) return data;
+
+        let result = [...data];
+
+        // Apply filtering
+        if (filters.length > 0) {
+            result = result.filter(row => {
                 return filters.every(({ column, operator, value }) => {
                     const cellValue = String(row[column as keyof T]).toLowerCase();
                     const filterValue = value.toLowerCase();
@@ -282,48 +671,126 @@ function Table<T extends object>({
                             return cellValue === filterValue;
                         case 'contains':
                             return cellValue.includes(filterValue);
-                        case 'greater than':
+                        case 'greater_than':
                             return Number(cellValue) > Number(filterValue);
-                        case 'less than':
+                        case 'less_than':
                             return Number(cellValue) < Number(filterValue);
                         default:
                             return true;
                     }
                 });
             });
-        }, [sortedData, filters, dataFetcher]);
+        }
 
-        const paginatedData = filteredData().slice(
-            pageIndex * currentPageSize,
-            (pageIndex + 1) * currentPageSize
-        );
+        // Apply sorting
+        if (sorts.length > 0) {
+            result.sort((a, b) => {
+                for (const { column, direction } of sorts) {
+                    const valA = a[column as keyof T];
+                    const valB = b[column as keyof T];
+                    if (valA < valB) return direction === 'asc' ? -1 : 1;
+                    if (valA > valB) return direction === 'asc' ? 1 : -1;
+                }
+                return 0;
+            });
+        }
 
-        const handleRefresh = () => {
-            if (onRefresh) onRefresh();
-            if (dataFetcher) fetchData();
+        // Apply pagination
+        const startIndex = pageIndex * currentPageSize;
+        return result.slice(startIndex, startIndex + currentPageSize);
+    }, [data, filters, sorts, pageIndex, currentPageSize, operations]);
+
+    // Calculate pagination info for client-side processing
+    const paginationInfo = useMemo(() => {
+        if (operations) {
+            return {
+                totalPages,
+                totalCount,
+                currentPage: pageIndex,
+                startRecord: pageIndex * currentPageSize + 1,
+                endRecord: Math.min((pageIndex + 1) * currentPageSize, totalCount)
+            };
+        }
+
+        // Client-side pagination calculation
+        let filteredCount = data.length;
+        if (filters.length > 0) {
+            filteredCount = data.filter(row => {
+                return filters.every(({ column, operator, value }) => {
+                    const cellValue = String(row[column as keyof T]).toLowerCase();
+                    const filterValue = value.toLowerCase();
+                    switch (operator) {
+                        case 'equals': return cellValue === filterValue;
+                        case 'contains': return cellValue.includes(filterValue);
+                        case 'greater_than': return Number(cellValue) > Number(filterValue);
+                        case 'less_than': return Number(cellValue) < Number(filterValue);
+                        default: return true;
+                    }
+                });
+            }).length;
+        }
+
+        const clientTotalPages = Math.max(1, Math.ceil(filteredCount / currentPageSize));
+        return {
+            totalPages: clientTotalPages,
+            totalCount: filteredCount,
+            currentPage: pageIndex,
+            startRecord: pageIndex * currentPageSize + 1,
+            endRecord: Math.min((pageIndex + 1) * currentPageSize, filteredCount)
         };
+    }, [data, filters, pageIndex, currentPageSize, operations, totalPages, totalCount]);
 
-        const clearFilters = () => setFilters([]);
+    const clearFilters = useCallback(() => {
+        setFilters([]);
+        setPageIndex(0);
+    }, [setFilters, setPageIndex]);
 
-        const clearSorts = () => setSorts([]);
+    const clearSorts = useCallback(() => {
+        setSorts([]);
+    }, [setSorts]);
 
-        if (loading) {
-            return <div className="universal-table">Loading...</div>;
-        }
+    const handlePageChange = useCallback((newPage: number) => {
+        setPageIndex(newPage);
+    }, [setPageIndex]);
 
-        if (error) {
-            return <div className="universal-table">{error}</div>;
-        }
+    const handlePageSizeChange = useCallback((newPageSize: number) => {
+        setCurrentPageSize(newPageSize);
+        setPageIndex(0); // Reset to first page when changing page size
+    }, [setCurrentPageSize, setPageIndex]);
 
-        return (
-            <div className={`universal-table ${className}`}>
+    return (
+        <>
+            <style>{styles}</style>
+            <div className={`universal-table ${className} ${loading ? 'table-loading' : ''}`}>
+                {loading && (
+                    <div className="loading-overlay">
+                        <div className="loading-spinner"></div>
+                    </div>
+                )}
+
+                {error && (
+                    <div className="table-error">
+                        Error: {error}
+                        {onRefresh && (
+                            <button
+                                onClick={onRefresh}
+                                style={{ marginLeft: '1rem', padding: '0.25rem 0.5rem' }}
+                            >
+                                Retry
+                            </button>
+                        )}
+                    </div>
+                )}
+
                 {showToolbar && (
                     <div className="table-toolbar">
                         <div className="toolbar-actions-left">
-                            <button className="action-btn" onClick={handleRefresh}>
-                                <RefreshIcon />
-                                Refresh
-                            </button>
+                            {onRefresh && (
+                                <button className="action-btn" onClick={onRefresh} disabled={loading}>
+                                    <RefreshIcon />
+                                    Refresh
+                                </button>
+                            )}
                         </div>
                         <div className="toolbar-actions-right">
                             <div className="filter-btn-wrapper">
@@ -335,7 +802,7 @@ function Table<T extends object>({
                                     <>
                                         <span className="badge">{filters.length}</span>
                                         <button className="clear-filters-btn" onClick={clearFilters}>
-                                            <CancelModalIcon/>
+                                            <CancelModalIcon />
                                         </button>
                                     </>
                                 )}
@@ -349,7 +816,7 @@ function Table<T extends object>({
                                     <>
                                         <span className="badge">{sorts.length}</span>
                                         <button className="clear-filters-btn" onClick={clearSorts}>
-                                            <CancelModalIcon/>
+                                            <CancelModalIcon />
                                         </button>
                                     </>
                                 )}
@@ -357,26 +824,38 @@ function Table<T extends object>({
                         </div>
                     </div>
                 )}
+
                 <div className="table-wrapper">
                     <table>
                         <thead>
                             <tr>
                                 {columns.map(col => (
-                                    <th key={String(col.key)}>
+                                    <th
+                                        key={String(col.key)}
+                                        onClick={col.sortable ? () => handleColumnSort(String(col.key)) : undefined}
+                                        style={{ cursor: col.sortable ? 'pointer' : 'default' }}
+                                    >
                                         {col.label}
-                                        {col.sortable && <span className="sort-icon"><SortIcon /></span>}
+                                        {col.sortable && (
+                                            <span className="sort-indicator">
+                                                {getSortIndicator(String(col.key))}
+                                            </span>
+                                        )}
                                     </th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody>
-                            {paginatedData.map((row, idx) => {
-                                const { className = '', onClick } = getRowProps ? getRowProps(row) : {};
+                            {processedData.map((row, idx) => {
+                                const { className: rowClassName = '', onClick } = getRowProps ? getRowProps(row) : {};
                                 return (
-                                    <tr key={idx} className={className} onClick={() => onClick?.(row)}>
+                                    <tr key={idx} className={rowClassName} onClick={() => onClick?.(row)}>
                                         {columns.map(col => (
                                             <td key={String(col.key)}>
-                                                {col.render ? col.render(row[col.key as keyof T], row) : String(row[col.key as keyof T] ?? '')}
+                                                {col.render
+                                                    ? col.render(row[col.key as keyof T], row)
+                                                    : String(row[col.key as keyof T] ?? '')
+                                                }
                                             </td>
                                         ))}
                                     </tr>
@@ -385,53 +864,103 @@ function Table<T extends object>({
                         </tbody>
                     </table>
                 </div>
+
                 {showPagination && (
                     <div className="table-pagination">
-                        <span>Page <strong>{pageIndex + 1}</strong> of <strong>{pageCount || 1}</strong></span>
-                        <div className="pagination-controls">
-                            <button onClick={() => setPageIndex(0)} disabled={pageIndex === 0}>First</button>
-                            <button onClick={() => setPageIndex(p => Math.max(0, p - 1))} disabled={pageIndex === 0}>Prev</button>
-                            <button onClick={() => setPageIndex(p => Math.min(pageCount - 1, p + 1))} disabled={pageIndex >= pageCount - 1}>Next</button>
-                            <button onClick={() => setPageIndex(pageCount - 1)} disabled={pageIndex >= pageCount - 1}>Last</button>
+                        <div className="pagination-info">
+                            Showing {paginationInfo.startRecord}-{paginationInfo.endRecord} of {paginationInfo.totalCount} records
                         </div>
-                        <select value={currentPageSize} onChange={e => setCurrentPageSize(Number(e.target.value))}>
-                            {[10, 20, 50, 100].map(ps => (<option key={ps} value={ps}>Show {ps}</option>))}
+                        <div className="pagination-controls">
+                            <button
+                                onClick={() => handlePageChange(0)}
+                                disabled={paginationInfo.currentPage === 0 || loading}
+                            >
+                                First
+                            </button>
+                            <button
+                                onClick={() => handlePageChange(paginationInfo.currentPage - 1)}
+                                disabled={paginationInfo.currentPage === 0 || loading}
+                            >
+                                Prev
+                            </button>
+                            <span>
+                                Page {paginationInfo.currentPage + 1} of {paginationInfo.totalPages}
+                            </span>
+                            <button
+                                onClick={() => handlePageChange(paginationInfo.currentPage + 1)}
+                                disabled={paginationInfo.currentPage >= paginationInfo.totalPages - 1 || loading}
+                            >
+                                Next
+                            </button>
+                            <button
+                                onClick={() => handlePageChange(paginationInfo.totalPages - 1)}
+                                disabled={paginationInfo.currentPage >= paginationInfo.totalPages - 1 || loading}
+                            >
+                                Last
+                            </button>
+                        </div>
+                        <select
+                            value={currentPageSize}
+                            onChange={e => handlePageSizeChange(Number(e.target.value))}
+                            disabled={loading}
+                        >
+                            {[10, 20, 50, 100].map(ps => (
+                                <option key={ps} value={ps}>Show {ps}</option>
+                            ))}
                         </select>
                     </div>
                 )}
-                <SortModal isOpen={sortModalOpen} onClose={() => setSortModalOpen(false)} columns={columns} />
-                <FilterModal isOpen={filterModalOpen} onClose={() => setFilterModalOpen(false)} columns={columns} />
+
+                <SortModal
+                    isOpen={sortModalOpen}
+                    onClose={() => setSortModalOpen(false)}
+                    columns={columns}
+                />
+                <FilterModal
+                    isOpen={filterModalOpen}
+                    onClose={() => setFilterModalOpen(false)}
+                    columns={columns}
+                />
             </div>
-        );
-    } catch (error) {
-        console.error('Table component error:', error);
-        return (
-            <div className="universal-table error">
-                <p>Dojo Training Error: Unable to render table. Please ensure it is wrapped with TableProvider.</p>
-            </div>
-        );
-    }
+        </>
+    );
 }
 
-// Sort Modal
-function SortModal<T>({ isOpen, onClose, columns }: { isOpen: boolean; onClose: () => void; columns: Column<T>[] }) {
+// Sort Modal Component
+function SortModal<T>({
+    isOpen,
+    onClose,
+    columns
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    columns: Column<T>[];
+}) {
     const { sorts, setSorts } = useTableContext();
 
-    const addSort = () => setSorts(prev => [...prev, { column: '', direction: 'asc' }]);
+    const addSort = useCallback(() => {
+        setSorts(prev => [...prev, { column: '', direction: 'asc' }]);
+    }, [setSorts]);
 
-    const updateSort = (index: number, field: 'column' | 'direction', value: string) => {
-        setSorts(prev => prev.map((s, i) => i === index ? { ...s, [field]: value } : s));
-    };
+    const updateSort = useCallback((index: number, field: 'column' | 'direction', value: string) => {
+        setSorts(prev => prev.map((s, i) =>
+            i === index ? { ...s, [field]: value } : s
+        ));
+    }, [setSorts]);
 
-    const removeSort = (index: number) => setSorts(prev => prev.filter((_, i) => i !== index));
+    const removeSort = useCallback((index: number) => {
+        setSorts(prev => prev.filter((_, i) => i !== index));
+    }, [setSorts]);
 
-    const applySorts = () => onClose();
+    const applySorts = useCallback(() => {
+        onClose();
+    }, [onClose]);
 
     if (!isOpen) return null;
 
     return (
         <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal" onClick={e => e.stopPropagation()}>
                 <div className="modal-head">
                     <h3>Sort By</h3>
                     <button className="close-btn" onClick={onClose}>×</button>
@@ -444,9 +973,14 @@ function SortModal<T>({ isOpen, onClose, columns }: { isOpen: boolean; onClose: 
                                 onChange={e => updateSort(index, 'column', e.target.value)}
                             >
                                 <option value="">Select Column</option>
-                                {columns.filter(c => c.sortable).map(c => (
-                                    <option key={String(c.key)} value={String(c.key)}>{c.label}</option>
-                                ))}
+                                {columns
+                                    .filter(c => c.sortable)
+                                    .map(c => (
+                                        <option key={String(c.key)} value={String(c.key)}>
+                                            {c.label}
+                                        </option>
+                                    ))
+                                }
                             </select>
                             <select
                                 value={sort.direction}
@@ -474,25 +1008,41 @@ function SortModal<T>({ isOpen, onClose, columns }: { isOpen: boolean; onClose: 
     );
 }
 
-// Filter Modal
-function FilterModal<T>({ isOpen, onClose, columns }: { isOpen: boolean; onClose: () => void; columns: Column<T>[] }) {
+// Filter Modal Component
+function FilterModal<T>({
+    isOpen,
+    onClose,
+    columns
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    columns: Column<T>[];
+}) {
     const { filters, setFilters } = useTableContext();
 
-    const addFilter = () => setFilters(prev => [...prev, { column: '', operator: 'equals', value: '' }]);
+    const addFilter = useCallback(() => {
+        setFilters(prev => [...prev, { column: '', operator: 'equals', value: '' }]);
+    }, [setFilters]);
 
-    const updateFilter = (index: number, field: 'column' | 'operator' | 'value', value: string) => {
-        setFilters(prev => prev.map((f, i) => i === index ? { ...f, [field]: value } : f));
-    };
+    const updateFilter = useCallback((index: number, field: 'column' | 'operator' | 'value', value: string) => {
+        setFilters(prev => prev.map((f, i) =>
+            i === index ? { ...f, [field]: value } : f
+        ));
+    }, [setFilters]);
 
-    const removeFilter = (index: number) => setFilters(prev => prev.filter((_, i) => i !== index));
+    const removeFilter = useCallback((index: number) => {
+        setFilters(prev => prev.filter((_, i) => i !== index));
+    }, [setFilters]);
 
-    const applyFilters = () => onClose();
+    const applyFilters = useCallback(() => {
+        onClose();
+    }, [onClose]);
 
     if (!isOpen) return null;
 
     return (
         <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal" onClick={e => e.stopPropagation()}>
                 <div className="modal-head">
                     <h3>Filters</h3>
                     <button className="close-btn" onClick={onClose}>×</button>
@@ -505,9 +1055,14 @@ function FilterModal<T>({ isOpen, onClose, columns }: { isOpen: boolean; onClose
                                 onChange={e => updateFilter(index, 'column', e.target.value)}
                             >
                                 <option value="">Select Column</option>
-                                {columns.filter(c => c.filterable).map(c => (
-                                    <option key={String(c.key)} value={String(c.key)}>{c.label}</option>
-                                ))}
+                                {columns
+                                    .filter(c => c.filterable)
+                                    .map(c => (
+                                        <option key={String(c.key)} value={String(c.key)}>
+                                            {c.label}
+                                        </option>
+                                    ))
+                                }
                             </select>
                             <select
                                 value={filter.operator}
@@ -515,8 +1070,8 @@ function FilterModal<T>({ isOpen, onClose, columns }: { isOpen: boolean; onClose
                             >
                                 <option value="equals">Equals</option>
                                 <option value="contains">Contains</option>
-                                <option value="greater than">Greater Than</option>
-                                <option value="less than">Less Than</option>
+                                <option value="greater_than">Greater Than</option>
+                                <option value="less_than">Less Than</option>
                             </select>
                             <input
                                 type="text"
@@ -543,4 +1098,239 @@ function FilterModal<T>({ isOpen, onClose, columns }: { isOpen: boolean; onClose
     );
 }
 
-export { Table, TableProvider };
+export { Table };
+
+interface DataFetcherParams {
+    page: number;
+    pageSize: number;
+    sorts: Sort[];
+    filters: Filter[];
+}
+
+interface DataFetcherResponse<T> {
+    records: T[];
+    total_count: number;
+    last_page: number;
+}
+
+interface UseTableDataOptions<T> {
+    fetcher: (params: DataFetcherParams) => Promise<DataFetcherResponse<T>>;
+    initialPageSize?: number;
+    enabled?: boolean; // Allow disabling auto-fetch
+}
+
+interface UseTableDataReturn<T> {
+    data: T[];
+    loading: boolean;
+    error: string | null;
+    pageCount: number;
+    totalCount: number;
+    currentPage: number;
+    refresh: () => void;
+
+    setSorts: (sorts: Sort[]) => void;
+    setFilters: (filters: Filter[]) => void;
+    setPage: (page: number) => void;
+    setPageSize: (pageSize: number) => void;
+
+    operations: TableOperations;
+}
+
+export function useTableData<T>({
+    fetcher,
+    initialPageSize = 10,
+    enabled = true
+}: UseTableDataOptions<T>): UseTableDataReturn<T> {
+    const [data, setData] = useState<T[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [pageCount, setPageCount] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+
+    const [params, setParams] = useState<DataFetcherParams>({
+        page: 0,
+        pageSize: initialPageSize,
+        sorts: [],
+        filters: [],
+    });
+
+    const stableFetcher = useRef(fetcher);
+    stableFetcher.current = fetcher;
+
+    const fetchData = useCallback(async (fetchParams: DataFetcherParams) => {
+        if (!enabled) return;
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            const response = await stableFetcher.current(fetchParams);
+            setData(response.records);
+            setPageCount(response.last_page);
+            setTotalCount(response.total_count);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to fetch data';
+            setError(errorMessage);
+            setData([]);
+            setPageCount(1);
+            setTotalCount(0);
+        } finally {
+            setLoading(false);
+        }
+    }, [enabled]);
+
+    // Debounce mechanism to prevent rapid API calls
+    useEffect(() => {
+        if (!enabled) return;
+
+        const timeoutId = setTimeout(() => {
+            fetchData(params);
+        }, 300); // 300ms debounce
+
+        return () => clearTimeout(timeoutId);
+    }, [params, fetchData, enabled]);
+
+    const operations: TableOperations = useMemo(() => ({
+        onSort: (sorts: Sort[]) => {
+            setParams(prev => ({ ...prev, sorts, page: 0 }));
+        },
+        onFilter: (filters: Filter[]) => {
+            setParams(prev => ({ ...prev, filters, page: 0 }));
+        },
+        onPageChange: (page: number) => {
+            setParams(prev => ({ ...prev, page }));
+        },
+        onPageSizeChange: (pageSize: number) => {
+            setParams(prev => ({ ...prev, pageSize, page: 0 }));
+        },
+    }), []);
+
+    // Direct setters for external control
+    const setSorts = useCallback((sorts: Sort[]) => {
+        setParams(prev => ({ ...prev, sorts, page: 0 }));
+    }, []);
+
+    const setFilters = useCallback((filters: Filter[]) => {
+        setParams(prev => ({ ...prev, filters, page: 0 }));
+    }, []);
+
+    const setPage = useCallback((page: number) => {
+        setParams(prev => ({ ...prev, page }));
+    }, []);
+
+    const setPageSize = useCallback((pageSize: number) => {
+        setParams(prev => ({ ...prev, pageSize, page: 0 }));
+    }, []);
+
+    const refresh = useCallback(() => {
+        fetchData(params);
+    }, [fetchData, params]);
+
+    return {
+        data,
+        loading,
+        error,
+        pageCount,
+        totalCount,
+        currentPage: params.page,
+        refresh,
+        setSorts,
+        setFilters,
+        setPage,
+        setPageSize,
+        operations,
+    };
+}
+
+// Demo Component
+function Demo() {
+    const sampleData = [
+        { id: 1, name: 'John Doe', age: 30, email: 'john@example.com', status: 'Active' },
+        { id: 2, name: 'Jane Smith', age: 25, email: 'jane@example.com', status: 'Inactive' },
+        { id: 3, name: 'Bob Johnson', age: 35, email: 'bob@example.com', status: 'Active' },
+        { id: 4, name: 'Alice Brown', age: 28, email: 'alice@example.com', status: 'Pending' },
+        { id: 5, name: 'Charlie Wilson', age: 42, email: 'charlie@example.com', status: 'Active' },
+        { id: 6, name: 'Diana Prince', age: 31, email: 'diana@example.com', status: 'Active' },
+        { id: 7, name: 'Edward Clark', age: 29, email: 'edward@example.com', status: 'Inactive' },
+        { id: 8, name: 'Fiona Davis', age: 33, email: 'fiona@example.com', status: 'Pending' },
+        { id: 9, name: 'George Miller', age: 27, email: 'george@example.com', status: 'Active' },
+        { id: 10, name: 'Helen White', age: 36, email: 'helen@example.com', status: 'Inactive' },
+        { id: 11, name: 'Ian Thompson', age: 24, email: 'ian@example.com', status: 'Active' },
+        { id: 12, name: 'Julia Garcia', age: 38, email: 'julia@example.com', status: 'Pending' },
+    ];
+
+    const columns = [
+        { key: 'id', label: 'ID', sortable: true, filterable: true },
+        { key: 'name', label: 'Name', sortable: true, filterable: true },
+        { key: 'age', label: 'Age', sortable: true, filterable: true },
+        { key: 'email', label: 'Email', sortable: true, filterable: true },
+        {
+            key: 'status',
+            label: 'Status',
+            sortable: true,
+            filterable: true,
+            render: (value: string) => (
+                <span style={{
+                    padding: '0.25rem 0.5rem',
+                    borderRadius: '4px',
+                    fontSize: '0.875rem',
+                    backgroundColor: value === 'Active' ? '#d4edda' : value === 'Pending' ? '#fff3cd' : '#f8d7da',
+                    color: value === 'Active' ? '#155724' : value === 'Pending' ? '#856404' : '#721c24'
+                }}>
+                    {value}
+                </span>
+            )
+        },
+    ];
+
+    const handleRefresh = () => {
+        console.log('Refreshing data...');
+    };
+
+    const getRowProps = (row: any) => ({
+        onClick: (row: any) => console.log('Clicked row:', row),
+        className: row.status === 'Inactive' ? 'inactive-row' : ''
+    });
+
+    return (
+        <div style={{ padding: '2rem' }}>
+            <h1>Table Component Demo</h1>
+            <TableProvider tableId="demo-table" initialPageSize={5}>
+                <Table
+                    tableId="demo-table"
+                    data={sampleData}
+                    columns={columns}
+                    onRefresh={handleRefresh}
+                    getRowProps={getRowProps}
+                    pageSize={5}
+                />
+            </TableProvider>
+        </div>
+    );
+}
+
+export default Demo;
+
+
+/* Exported Staff is:
+
+
+** Components
+* export { Table, TableProvider }
+* export default Demo
+
+** Types
+* export interface Column<T>
+* export interface RowProps<T>  
+* export interface Sort
+* export interface Filter
+* export interface TableOperations
+* export interface TableProps<T>
+
+** Hooks
+* export function useTableData<T>()
+
+** Icons
+* export function AddIcon()
+
+*/
