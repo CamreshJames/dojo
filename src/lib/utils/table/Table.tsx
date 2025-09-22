@@ -1,9 +1,7 @@
 import { createContext, useState, useEffect, useCallback, useContext, useMemo, useRef } from 'react';
 import type { ReactNode } from 'react';
 
-// Inline CSS
 const styles = `
-/* Universal Table Styles */
 .universal-table {
   --border-color: #ddd;
   --bg-color: #fff;
@@ -1116,7 +1114,7 @@ interface DataFetcherResponse<T> {
 interface UseTableDataOptions<T> {
     fetcher: (params: DataFetcherParams) => Promise<DataFetcherResponse<T>>;
     initialPageSize?: number;
-    enabled?: boolean; // Allow disabling auto-fetch
+    enabled?: boolean;
 }
 
 interface UseTableDataReturn<T> {
@@ -1179,7 +1177,6 @@ export function useTableData<T>({
         }
     }, [enabled]);
 
-    // Debounce mechanism to prevent rapid API calls
     useEffect(() => {
         if (!enabled) return;
 

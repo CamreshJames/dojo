@@ -1,8 +1,10 @@
-// src/routes/_authenticated/tasks/$taskId.tsx
 import { createFileRoute, useParams, useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@lib/contexts/AuthContext';
 import { useEffect, useState } from 'react';
+import { createApiClient } from '@lib/utils/api';
+import EditableField from '@lib/components/EditableField';
 
+// Interface for Task data
 interface Task {
   id: number;
   subject_id: number;
@@ -16,7 +18,7 @@ interface Task {
   created_at: string;
   updated_at: string;
   created_by_name: string;
-  subject_name?: string; // Optional subject name from response
+  subject_name?: string;
 }
 
 function TaskDetail() {
@@ -26,7 +28,10 @@ function TaskDetail() {
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const apiClient = createApiClient(import.meta.env.VITE_HOST_URL);
 
+  // Fetch task data on component mount or taskId/getToken change
   useEffect(() => {
     const fetchTask = async () => {
       const token = getToken();
@@ -36,22 +41,43 @@ function TaskDetail() {
         return;
       }
 
-      try {
-        const response = await fetch(`${import.meta.env.VITE_HOST_URL}/admin/tasks/${taskId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!response.ok) throw new Error('Failed to fetch task');
-        const data = await response.json();
-        setTask(data.task); // Extract nested task object from response
-      } catch (err) {
-        setError((err as Error).message);
-      } finally {
-        setLoading(false);
+      const response = await apiClient.get(`/admin/tasks/${taskId}`, { token });
+      
+      if (response.success) {
+        setTask(response.data.task);
+      } else {
+        setError(response.error || 'Failed to fetch task');
       }
+      setLoading(false);
     };
+    
     fetchTask();
   }, [taskId, getToken]);
 
+  // Handle updates to task fields
+  const handleFieldUpdate = (field: keyof Task) => async (value: any): Promise<boolean> => {
+    if (!task) return false;
+    
+    const token = getToken();
+    if (!token) return false;
+
+    // Convert string "true"/"false" to boolean for is_active
+    const patchedValue = field === 'is_active' ? value === 'true' : value;
+
+    const response = await apiClient.put(`/admin/tasks/${taskId}`, 
+      { [field]: patchedValue }, 
+      { token }
+    );
+
+    if (response.success) {
+      setTask(prev => prev ? { ...prev, [field]: patchedValue } : null);
+      return true;
+    }
+    
+    return false;
+  };
+
+  // Loading state
   if (loading) {
     return (
       <div className="loading" style={{ textAlign: 'center', padding: '2rem' }}>
@@ -69,6 +95,7 @@ function TaskDetail() {
     );
   }
 
+  // Error state
   if (error) {
     return (
       <div className="error" style={{
@@ -84,6 +111,7 @@ function TaskDetail() {
     );
   }
 
+  // Task not found state
   if (!task) {
     return (
       <div className="not-found" style={{ textAlign: 'center', padding: '2rem' }}>
@@ -91,6 +119,12 @@ function TaskDetail() {
       </div>
     );
   }
+
+  // Options for is_active select field
+  const statusOptions = [
+    { value: 'true', label: 'Active' },
+    { value: 'false', label: 'Inactive' },
+  ];
 
   return (
     <div className="task-detail" style={{
@@ -134,22 +168,20 @@ function TaskDetail() {
         borderRadius: '8px',
         boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
         padding: '2rem',
+        display: 'flex',
+        gap: '2rem',
+        flexWrap: 'wrap',
       }}>
-        <div className="status-section" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <span style={{
-            display: 'inline-block',
-            padding: '0.25rem 0.75rem',
-            borderRadius: '12px',
-            background: task.is_active ? 'var(--primary-light)' : '#f8d7da',
-            color: task.is_active ? 'var(--primary-dark)' : '#721c24',
-            fontSize: '0.85rem',
-            fontWeight: '500',
-          }}>
-            {task.is_active ? 'Active' : 'Inactive'}
-          </span>
+        <div className="status-section" style={{ textAlign: 'center', flex: '0 0 200px' }}>
+          <EditableField
+            value={task.is_active.toString()}
+            onSave={handleFieldUpdate('is_active')}
+            type="select"
+            options={statusOptions}
+          />
         </div>
 
-        <div className="details-section">
+        <div className="details-section" style={{ flex: '1', minWidth: '250px' }}>
           {task.subject_name && (
             <div className="detail-item" style={{ marginBottom: '1rem' }}>
               <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Subject</h3>
@@ -157,20 +189,55 @@ function TaskDetail() {
             </div>
           )}
           <div className="detail-item" style={{ marginBottom: '1rem' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Title</h3>
+            <EditableField
+              value={task.title}
+              onSave={handleFieldUpdate('title')}
+              validation={(value) => !value ? 'Title is required' : null}
+            />
+          </div>
+          <div className="detail-item" style={{ marginBottom: '1rem' }}>
             <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Description</h3>
-            <p style={{ margin: 0, color: '#333', fontSize: '1rem' }}>{task.description || 'No description'}</p>
+            <EditableField
+              value={task.description || ''}
+              onSave={handleFieldUpdate('description')}
+              type="textarea"
+            />
           </div>
           <div className="detail-item" style={{ marginBottom: '1rem' }}>
             <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Requirements</h3>
-            <p style={{ margin: 0, color: '#333', fontSize: '1rem' }}>{task.requirements || 'No requirements'}</p>
+            <EditableField
+              value={task.requirements || ''}
+              onSave={handleFieldUpdate('requirements')}
+              type="textarea"
+            />
           </div>
           <div className="detail-item" style={{ marginBottom: '1rem' }}>
             <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Due Date</h3>
-            <p style={{ margin: 0, color: '#333', fontSize: '1rem' }}>{new Date(task.due_date).toLocaleString()}</p>
+            <EditableField
+              value={task.due_date}
+              onSave={handleFieldUpdate('due_date')}
+              type="date"
+              validation={(value) => {
+                if (!value) return 'Due date is required';
+                if (new Date(value) < new Date()) return 'Due date must be in the future';
+                return null;
+              }}
+            />
           </div>
           <div className="detail-item" style={{ marginBottom: '1rem' }}>
             <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Max Score</h3>
-            <p style={{ margin: 0, color: '#333', fontSize: '1rem' }}>{task.max_score}</p>
+            <EditableField
+              value={task.max_score.toString()}
+              onSave={handleFieldUpdate('max_score')}
+              type="number"
+              validation={(value) => {
+                const num = parseInt(value);
+                if (isNaN(num)) return 'Score must be a number';
+                if (num <= 0) return 'Score must be positive';
+                return null;
+              }}
+            />
           </div>
           <div className="detail-item" style={{ marginBottom: '1rem' }}>
             <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Created By</h3>

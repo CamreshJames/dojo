@@ -1,4 +1,3 @@
-// src/routes/_authenticated/subjects/index.tsx
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Table, TableProvider, type Column } from '@lib/utils/table/Table';
 import { useAuth } from '@lib/contexts/AuthContext';

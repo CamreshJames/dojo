@@ -1,4 +1,3 @@
-// @lib/utils/api.ts
 interface RequestConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   headers?: Record<string, string>;

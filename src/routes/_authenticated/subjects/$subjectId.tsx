@@ -1,4 +1,3 @@
-// src/routes/_authenticated/subjects/$subjectId.tsx
 import { createFileRoute, useParams, useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@lib/contexts/AuthContext';
 import { useEffect, useState } from 'react';
