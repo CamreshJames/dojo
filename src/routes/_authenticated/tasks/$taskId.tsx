@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { createApiClient } from '@lib/utils/api';
 import EditableField from '@lib/components/EditableField';
 
-// Interface for Task data
 interface Task {
   id: number;
   subject_id: number;
@@ -31,7 +30,6 @@ function TaskDetail() {
   
   const apiClient = createApiClient(import.meta.env.VITE_HOST_URL);
 
-  // Fetch task data on component mount or taskId/getToken change
   useEffect(() => {
     const fetchTask = async () => {
       const token = getToken();
@@ -41,7 +39,7 @@ function TaskDetail() {
         return;
       }
 
-      const response = await apiClient.get(`/admin/tasks/${taskId}`, { token });
+      const response = await apiClient.get(`/api/admin/tasks/${taskId}`, { token });
       
       if (response.success) {
         setTask(response.data.task);
@@ -54,27 +52,36 @@ function TaskDetail() {
     fetchTask();
   }, [taskId, getToken]);
 
-  // Handle updates to task fields
   const handleFieldUpdate = (field: keyof Task) => async (value: any): Promise<boolean> => {
     if (!task) return false;
     
     const token = getToken();
-    if (!token) return false;
-
-    // Convert string "true"/"false" to boolean for is_active
-    const patchedValue = field === 'is_active' ? value === 'true' : value;
-
-    const response = await apiClient.put(`/admin/tasks/${taskId}`, 
-      { [field]: patchedValue }, 
-      { token }
-    );
-
-    if (response.success) {
-      setTask(prev => prev ? { ...prev, [field]: patchedValue } : null);
-      return true;
+    if (!token) {
+      setError('No auth token');
+      return false;
     }
     
-    return false;
+    const patchedValue = field === 'is_active' ? value === 'true' : value;
+
+    try {
+      const response = await apiClient.put(`/api/admin/tasks/${taskId}`, 
+        { [field]: patchedValue }, 
+        { token }
+      );
+
+      if (response.success) {
+        setTask(prev => prev ? { ...prev, [field]: patchedValue } : null);
+        setError(null); // Clear any previous errors
+        return true;
+      } else {
+        setError(response.error || 'Failed to update task');
+        return false;
+      }
+    } catch (err) {
+      console.error('Update error:', err);
+      setError((err as Error).message || 'Failed to update task');
+      return false;
+    }
   };
 
   // Loading state

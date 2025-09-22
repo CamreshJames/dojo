@@ -73,8 +73,8 @@ function SubjectsIndex() {
       ),
     },
     { key: 'created_by_name', label: 'Created By', sortable: true, filterable: true },
-    { key: 'created_at', label: 'Created At', sortable: true },
-    { key: 'updated_at', label: 'Updated At', sortable: true },
+    // { key: 'created_at', label: 'Created At', sortable: true },
+    // { key: 'updated_at', label: 'Updated At', sortable: true },
   ];
 
   const getRowProps = (row: SubjectRow) => ({

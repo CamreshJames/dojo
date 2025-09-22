@@ -90,8 +90,8 @@ function UsersIndex() {
         </span>
       ),
     },
-    { key: 'created_at', label: 'Created At', sortable: true },
-    { key: 'updated_at', label: 'Updated At', sortable: true },
+    // { key: 'created_at', label: 'Created At', sortable: true },
+    // { key: 'updated_at', label: 'Updated At', sortable: true },
   ];
 
   const getRowProps = (row: UserRow) => ({
