@@ -1,19 +1,17 @@
-// @lib/utils/Form.tsx
+
 import React, { useState, useEffect } from 'react';
 import './Form.css'
 
-// Generic Form field type
 export interface Field<Values> {
     name: keyof Values;
     label: string;
     type: 'text' | 'password' | 'email' | 'number' | 'date' | 'checkbox' | 'select' | 'textarea';
-    options?: { value: string; label: string }[]; // For select
-    validation?: (value: any) => string | null; // Validation function returning error or null
+    options?: { value: string; label: string }[]; 
+    validation?: (value: any) => string | null; 
     disabled?: boolean;
     placeholder?: string;
 }
 
-// Generic Form props
 interface FormProps<Values extends object> {
     fields: Field<Values>[];
     initialValues: Partial<Values>;
@@ -80,7 +78,6 @@ function Form<Values extends object>({
             await onSubmit(values as Values);
         } catch (err) {
             console.error('Form submission error:', err);
-            // Handle global error if needed
         } finally {
             setSubmitting(false);
         }

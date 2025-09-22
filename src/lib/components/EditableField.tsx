@@ -1,5 +1,16 @@
-import { EditIcon } from '@lib/utils/icons';
 import React, { useState, useEffect, useRef } from 'react';
+import type { SVGProps } from 'react';
+import type { JSX } from "react/jsx-runtime"
+
+export function EditIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
+    return (
+        <svg viewBox="0 0 16 16" width="16" height="16" xmlns="http://www.w3.org/2000/svg" {...props}>
+            <path
+                d="M12.146 2.146a.5.5 0 0 1 .708 0l1 1a.5.5 0 0 1 0 .708l-8.5 8.5a.5.5 0 0 1-.168.11l-3 1a.5.5 0 0 1-.65-.65l1-3a.5.5 0 0 1 .11-.168l8.5-8.5zM11.207 3.5L4 10.707V12h1.293L13.5 4.793 11.207 2.5 11.207 3.5z"
+            />
+        </svg>
+    );
+}
 
 interface EditableFieldProps {
     value: string | number | boolean;
