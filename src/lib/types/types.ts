@@ -24,7 +24,7 @@ export interface Subject {
   created_by_name: string;
 }
 
-interface User {
+export interface User {
   id: number;
   email: string;
   name: string;
