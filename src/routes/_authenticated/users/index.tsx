@@ -34,7 +34,7 @@ function UsersIndex() {
     try {
       const query = new URLSearchParams({
         page: '1',
-        pageSize: '100', // Fetch all since small dataset
+        pageSize: '100',
       });
 
       const response = await fetch(`${import.meta.env.VITE_HOST_URL}/admin/users?${query}`, {
@@ -80,8 +80,8 @@ function UsersIndex() {
             padding: '0.25rem 0.5rem',
             borderRadius: '4px',
             backgroundColor:
-              value === 'approved' ? 'hsl(12, 100%, 90%)' :
-              value === 'pending' ? 'hsl(12, 100%, 70%)' :
+              value === 'approved' ? 'hsl(108, 100.00%, 43.30%)' :
+              value === 'pending' ? 'hsl(15, 3.60%, 78.00%)' :
               'hsl(12, 100%, 50%)',
             color: '#fff',
           }}

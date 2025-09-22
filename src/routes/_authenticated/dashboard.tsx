@@ -54,21 +54,21 @@ function Dashboard() {
   }, [getToken]);
 
   return (
-    <div className="dashboard" style={{ '--primary': 'hsl(12, 100%, 50%)', '--primary-light': 'hsl(12, 100%, 70%)', '--primary-dark': 'hsl(12, 100%, 30%)' } as React.CSSProperties}>
+    <div className="dashboard" style={{ '--primary': 'hsl(12, 100%, 50%)', '--primary-light': 'hsl(12, 100%, 70%), ', '--primary-dark': 'hsl(12, 100%, 30%)', '--primary-bg': 'hsl(12, 100.00%, 97.10%)'} as React.CSSProperties}>
       <h1 style={{ color: 'var(--primary)' }}>Welcome, {user?.username || 'User'}!</h1>
       {loading ? (
         <p>Loading summary...</p>
       ) : (
         <div className="cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-          <div className="card" style={{ padding: '1rem', background: 'var(--primary-light)', borderRadius: '8px', textAlign: 'center' }}>
+          <div className="card" style={{ padding: '1rem', background: 'var(--primary-bg)', borderRadius: '8px', textAlign: 'center' }}>
             <h2 style={{ color: 'var(--primary-dark)' }}>Total Users</h2>
             <p style={{ fontSize: '2rem', color: 'var(--primary)' }}>{summary.users}</p>
           </div>
-          <div className="card" style={{ padding: '1rem', background: 'var(--primary-light)', borderRadius: '8px', textAlign: 'center' }}>
+          <div className="card" style={{ padding: '1rem', background: 'var(--primary-bg)', borderRadius: '8px', textAlign: 'center' }}>
             <h2 style={{ color: 'var(--primary-dark)' }}>Total Tasks</h2>
             <p style={{ fontSize: '2rem', color: 'var(--primary)' }}>{summary.tasks}</p>
           </div>
-          <div className="card" style={{ padding: '1rem', background: 'var(--primary-light)', borderRadius: '8px', textAlign: 'center' }}>
+          <div className="card" style={{ padding: '1rem', background: 'var(--primary-bg)', borderRadius: '8px', textAlign: 'center' }}>
             <h2 style={{ color: 'var(--primary-dark)' }}>Total Subjects</h2>
             <p style={{ fontSize: '2rem', color: 'var(--primary)' }}>{summary.subjects}</p>
           </div>
