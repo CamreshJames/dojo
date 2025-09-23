@@ -1,72 +1,75 @@
-// src/routes/_authenticated/users/$userId.tsx
+// $userId.tsx
 import { createFileRoute, useParams, useNavigate } from '@tanstack/react-router';
-import { useAuth } from '@lib/contexts/AuthContext';
-import { useEffect, useState } from 'react';
-import { createApiClient } from '@lib/utils/api';
+import { useFetch, useMutate } from '@lib/utils/useApiHooks';
 import EditableField from '@lib/components/EditableField';
-
-interface User {
-  id: number;
-  email: string;
-  name: string;
-  google_id?: string;
-  role: string;
-  status: string;
-  avatar_url?: string;
-  created_at: string;
-  updated_at: string;
-}
+import { useState, useCallback, useEffect } from 'react';
+import { type User } from '@lib/types/types';
 
 function UserDetail() {
   const { userId } = useParams({ from: '/_authenticated/users/$userId' });
-  const { getToken } = useAuth();
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  const apiClient = createApiClient(import.meta.env.VITE_HOST_URL);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+  const isValidUserId = !isNaN(parseInt(userId));
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      const token = getToken();
-      if (!token) {
-        setError('No auth token');
-        setLoading(false);
-        return;
-      }
-
-      const response = await apiClient.get(`/admin/users/${userId}`, { token });
-      
-      if (response.success) {
-        setUser(response.data.user);
-      } else {
-        setError(response.error || 'Failed to fetch user');
-      }
-      setLoading(false);
-    };
-    
-    fetchUser();
-  }, [userId, getToken]);
-
-  const handleFieldUpdate = (field: keyof User) => async (value: any): Promise<boolean> => {
-    if (!user) return false;
-    
-    const token = getToken();
-    if (!token) return false;
-
-    const response = await apiClient.patch(`/admin/users/${userId}`, 
-      { [field]: value }, 
-      { token }
-    );
-
-    if (response.success) {
-      setUser(prev => prev ? { ...prev, [field]: value } : null);
-      return true;
+  // Fetch user data
+  const { data, loading, error } = useFetch<{ user: User }>(
+    isValidUserId ? `/admin/users/${userId}` : '',
+    {
+      baseUrl: '/api',
+      token: import.meta.env.VITE_ADMIN_BEARER_TOKEN,
+      skip: !isValidUserId,
     }
-    
-    return false;
-  };
+  );
+  const user = data?.user;
+
+  // Initialize mutation hook
+  const { mutate, error: mutateError, loading: mutateLoading } = useMutate<User>(
+    `/admin/users/${userId}`,
+    {
+      baseUrl: '/api',
+      token: import.meta.env.VITE_ADMIN_BEARER_TOKEN,
+      defaultMethod: 'PUT',
+    }
+  );
+  useEffect(() => {
+    if (mutationError) {
+      const timer = setTimeout(() => {
+        setMutationError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [mutationError]);
+
+  const handleFieldUpdate = useCallback(
+    (field: keyof User) => async (value: any): Promise<boolean> => {
+      if (!user || !isValidUserId) {
+        setMutationError('Invalid user ID or no user data');
+        return false;
+      }
+      console.log(`Updating field ${field} with value:`, value);
+      const success = await mutate({ [field]: value }, 'PUT'); 
+      if (!success) {
+        setMutationError(mutateError || 'Failed to update user. Check endpoint and method.');
+      }
+      return success;
+    },
+    [user, isValidUserId, mutate, mutateError]
+  );
+
+  if (!isValidUserId) {
+    return (
+      <div className="error" style={{
+        padding: '1rem',
+        background: '#f8d7da',
+        color: '#721c24',
+        borderRadius: '4px',
+        margin: '1rem',
+        textAlign: 'center',
+      }}>
+        Error: Invalid user ID
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -129,6 +132,31 @@ function UserDetail() {
       margin: '2rem auto',
       padding: '0 1rem',
     } as React.CSSProperties}>
+      {mutationError && (
+        <div className="mutation-error" style={{
+          padding: '1rem',
+          background: '#f8d7da',
+          color: '#721c24',
+          borderRadius: '4px',
+          margin: '1rem 0',
+          textAlign: 'center',
+          transition: 'opacity 0.5s ease-out', // Smooth fade-out
+        }}>
+          Error updating user: {mutationError}
+        </div>
+      )}
+      {mutateLoading && (
+        <div className="mutation-loading" style={{
+          padding: '1rem',
+          background: '#d4edda',
+          color: '#155724',
+          borderRadius: '4px',
+          margin: '1rem 0',
+          textAlign: 'center',
+        }}>
+          Updating user...
+        </div>
+      )}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',

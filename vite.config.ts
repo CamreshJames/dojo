@@ -28,7 +28,8 @@ export default defineConfig({
         target: 'https://the-dojo.pagoda.africa',
         changeOrigin: true,
         secure: false,
+        rewrite: (path) => path.replace(/^\/api/, '/api'),
       },
     },
-  }
+  },
 });

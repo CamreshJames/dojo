@@ -1,6 +1,6 @@
 // src/routes/_authenticated/users/index.tsx
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { Table, TableProvider, type Column } from '@lib/utils/table/Table';
+import { Table, type Column } from '@lib/utils/table/Table';
 import { useAuth } from '@lib/contexts/AuthContext';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -107,15 +107,14 @@ function UsersIndex() {
   return (
     <div className="users-index" style={{ '--primary': 'hsl(12, 100%, 50%)' } as React.CSSProperties}>
       <h1 style={{ color: 'var(--primary)' }}>Users</h1>
-      <TableProvider tableId="users-table" initialPageSize={10}>
         <Table<UserRow>
           tableId="users-table"
           data={data}
           columns={columns}
           onRefresh={handleRefresh}
           getRowProps={getRowProps}
+          initialPageSize={10}
         />
-      </TableProvider>
     </div>
   );
 }

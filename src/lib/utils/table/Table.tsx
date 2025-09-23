@@ -17,7 +17,6 @@ const styles = `
   color: var(--text-color);
 }
 
-/* Loading overlay */
 .table-loading {
   position: relative;
 }
@@ -49,7 +48,6 @@ const styles = `
   100% { transform: rotate(360deg); }
 }
 
-/* Error message */
 .table-error {
   padding: 1rem;
   background: #f8d7da;
@@ -59,7 +57,6 @@ const styles = `
   border-radius: 4px;
 }
 
-/* Toolbar & Actions */
 .table-toolbar {
   display: flex;
   justify-content: space-between;
@@ -141,7 +138,6 @@ const styles = `
   color: #a71d2a;
 }
 
-/* Table Core */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -167,7 +163,6 @@ th {
   vertical-align: middle;
 }
 
-/* Row Styling */
 tr {
   cursor: pointer;
   transition: background-color 0.2s;
@@ -178,7 +173,6 @@ tr:focus, th:focus {
   outline-offset: -2px;
 }
 
-/* Pagination */
 .table-pagination {
   display: flex;
   justify-content: space-between;
@@ -220,7 +214,6 @@ tr:focus, th:focus {
   background: var(--bg-color);
 }
 
-/* Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -385,7 +378,6 @@ tr:focus, th:focus {
 }
 `;
 
-// Icons
 export function AddIcon() {
     return (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -434,7 +426,6 @@ function CancelModalIcon() {
     );
 }
 
-// Core types
 export interface Column<T> {
     key: keyof T | string;
     label: string;
@@ -459,7 +450,6 @@ export interface Filter {
     value: string;
 }
 
-// Table operation handlers
 export interface TableOperations {
     onSort?: (sorts: Sort[]) => void;
     onFilter?: (filters: Filter[]) => void;
@@ -473,25 +463,22 @@ export interface TableProps<T> {
     columns: Column<T>[];
     loading?: boolean;
     error?: string | null;
+    initialPageSize?: number;
 
-    // Pagination props
     currentPage?: number;
     totalPages?: number;
     totalCount?: number;
     pageSize?: number;
 
-    // UI customization
     getRowProps?: (row: T) => RowProps<T>;
     onRefresh?: () => void;
     showToolbar?: boolean;
     showPagination?: boolean;
     className?: string;
 
-    // Server-side operations
     operations?: TableOperations;
 }
 
-// Context for table state
 interface TableContextValue {
     sorts: Sort[];
     setSorts: React.Dispatch<React.SetStateAction<Sort[]>>;
@@ -513,13 +500,10 @@ const useTableContext = () => {
     return context;
 };
 
-// Table Provider
-export function TableProvider({
-    // tableId, 
+function TableProvider({
     children,
     initialPageSize = 10
 }: {
-    tableId: string;
     children: ReactNode;
     initialPageSize?: number;
 }) {
@@ -546,8 +530,7 @@ export function TableProvider({
     );
 }
 
-// Main Table component
-function Table<T extends object>({
+function TableContent<T extends object>({
     data,
     columns,
     loading = false,
@@ -562,7 +545,7 @@ function Table<T extends object>({
     showPagination = true,
     className = '',
     operations
-}: TableProps<T>) {
+}: Omit<TableProps<T>, 'initialPageSize' | 'tableId'>) {
     const {
         sorts,
         setSorts,
@@ -577,7 +560,6 @@ function Table<T extends object>({
     const [sortModalOpen, setSortModalOpen] = useState(false);
     const [filterModalOpen, setFilterModalOpen] = useState(false);
 
-    // Track previous operation calls to prevent unnecessary re-calls
     const lastOperationCall = useRef<{
         sorts?: Sort[];
         filters?: Filter[];
@@ -585,21 +567,18 @@ function Table<T extends object>({
         pageSize?: number;
     }>({});
 
-    // Sync page size with prop
     useEffect(() => {
         if (currentPageSize !== pageSize) {
             setCurrentPageSize(pageSize);
         }
     }, [pageSize, currentPageSize, setCurrentPageSize]);
 
-    // Sync page index with prop
     useEffect(() => {
         if (pageIndex !== currentPage) {
             setPageIndex(currentPage);
         }
     }, [currentPage, pageIndex, setPageIndex]);
 
-    // Handle operations with debouncing to prevent unnecessary calls
     useEffect(() => {
         if (!operations) return;
 
@@ -625,7 +604,6 @@ function Table<T extends object>({
         lastOperationCall.current = current;
     }, [sorts, filters, pageIndex, currentPageSize, operations]);
 
-    // Handle column sorting
     const handleColumnSort = useCallback((columnKey: string) => {
         setSorts(prev => {
             const existingIndex = prev.findIndex(s => s.column === columnKey);
@@ -645,19 +623,16 @@ function Table<T extends object>({
         });
     }, [setSorts]);
 
-    // Get sort indicator for column
     const getSortIndicator = useCallback((columnKey: string) => {
         const sort = sorts.find(s => s.column === columnKey);
         return sort ? (sort.direction === 'asc' ? '↑' : '↓') : '';
     }, [sorts]);
 
-    // Client-side data processing (fallback when no operations provided)
     const processedData = useMemo(() => {
         if (operations) return data;
 
         let result = [...data];
 
-        // Apply filtering
         if (filters.length > 0) {
             result = result.filter(row => {
                 return filters.every(({ column, operator, value }) => {
@@ -680,7 +655,6 @@ function Table<T extends object>({
             });
         }
 
-        // Apply sorting
         if (sorts.length > 0) {
             result.sort((a, b) => {
                 for (const { column, direction } of sorts) {
@@ -693,12 +667,10 @@ function Table<T extends object>({
             });
         }
 
-        // Apply pagination
         const startIndex = pageIndex * currentPageSize;
         return result.slice(startIndex, startIndex + currentPageSize);
     }, [data, filters, sorts, pageIndex, currentPageSize, operations]);
 
-    // Calculate pagination info for client-side processing
     const paginationInfo = useMemo(() => {
         if (operations) {
             return {
@@ -710,7 +682,6 @@ function Table<T extends object>({
             };
         }
 
-        // Client-side pagination calculation
         let filteredCount = data.length;
         if (filters.length > 0) {
             filteredCount = data.filter(row => {
@@ -753,7 +724,7 @@ function Table<T extends object>({
 
     const handlePageSizeChange = useCallback((newPageSize: number) => {
         setCurrentPageSize(newPageSize);
-        setPageIndex(0); // Reset to first page when changing page size
+        setPageIndex(0);
     }, [setCurrentPageSize, setPageIndex]);
 
     return (
@@ -924,7 +895,6 @@ function Table<T extends object>({
     );
 }
 
-// Sort Modal Component
 function SortModal<T>({
     isOpen,
     onClose,
@@ -1006,7 +976,6 @@ function SortModal<T>({
     );
 }
 
-// Filter Modal Component
 function FilterModal<T>({
     isOpen,
     onClose,
@@ -1096,7 +1065,45 @@ function FilterModal<T>({
     );
 }
 
-export { Table };
+export function Table<T extends object>({
+    tableId,
+    data,
+    columns,
+    loading = false,
+    error = null,
+    initialPageSize = 10,
+    currentPage = 0,
+    totalPages = 1,
+    totalCount = 0,
+    pageSize = 10,
+    getRowProps,
+    onRefresh,
+    showToolbar = true,
+    showPagination = true,
+    className = '',
+    operations
+}: TableProps<T>) {
+    return (
+        <TableProvider initialPageSize={initialPageSize}>
+            <TableContent
+                data={data}
+                columns={columns}
+                loading={loading}
+                error={error}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalCount={totalCount}
+                pageSize={pageSize}
+                getRowProps={getRowProps}
+                onRefresh={onRefresh}
+                showToolbar={showToolbar}
+                showPagination={showPagination}
+                className={className}
+                operations={operations}
+            />
+        </TableProvider>
+    );
+}
 
 interface DataFetcherParams {
     page: number;
@@ -1125,12 +1132,10 @@ interface UseTableDataReturn<T> {
     totalCount: number;
     currentPage: number;
     refresh: () => void;
-
     setSorts: (sorts: Sort[]) => void;
     setFilters: (filters: Filter[]) => void;
     setPage: (page: number) => void;
     setPageSize: (pageSize: number) => void;
-
     operations: TableOperations;
 }
 
@@ -1182,7 +1187,7 @@ export function useTableData<T>({
 
         const timeoutId = setTimeout(() => {
             fetchData(params);
-        }, 300); // 300ms debounce
+        }, 300);
 
         return () => clearTimeout(timeoutId);
     }, [params, fetchData, enabled]);
@@ -1202,7 +1207,6 @@ export function useTableData<T>({
         },
     }), []);
 
-    // Direct setters for external control
     const setSorts = useCallback((sorts: Sort[]) => {
         setParams(prev => ({ ...prev, sorts, page: 0 }));
     }, []);
@@ -1239,7 +1243,6 @@ export function useTableData<T>({
     };
 }
 
-// Demo Component
 function Demo() {
     const sampleData = [
         { id: 1, name: 'John Doe', age: 30, email: 'john@example.com', status: 'Active' },
@@ -1292,42 +1295,16 @@ function Demo() {
     return (
         <div style={{ padding: '2rem' }}>
             <h1>Table Component Demo</h1>
-            <TableProvider tableId="demo-table" initialPageSize={5}>
-                <Table
-                    tableId="demo-table"
-                    data={sampleData}
-                    columns={columns}
-                    onRefresh={handleRefresh}
-                    getRowProps={getRowProps}
-                    pageSize={5}
-                />
-            </TableProvider>
+            <Table
+                tableId="demo-table"
+                data={sampleData}
+                columns={columns}
+                onRefresh={handleRefresh}
+                getRowProps={getRowProps}
+                initialPageSize={5}
+            />
         </div>
     );
 }
 
 export default Demo;
-
-
-/* Exported Staff is:
-
-
-** Components
-* export { Table, TableProvider }
-* export default Demo
-
-** Types
-* export interface Column<T>
-* export interface RowProps<T>  
-* export interface Sort
-* export interface Filter
-* export interface TableOperations
-* export interface TableProps<T>
-
-** Hooks
-* export function useTableData<T>()
-
-** Icons
-* export function AddIcon()
-
-*/

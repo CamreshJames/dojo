@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { Table, TableProvider, type Column } from '@lib/utils/table/Table';
+import { Table, type Column } from '@lib/utils/table/Table';
 import { useAuth } from '@lib/contexts/AuthContext';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -90,15 +90,14 @@ function SubjectsIndex() {
   return (
     <div className="subjects-index" style={{ '--primary': 'hsl(12, 100%, 50%)' } as React.CSSProperties}>
       <h1 style={{ color: 'var(--primary)' }}>Subjects</h1>
-      <TableProvider tableId="subjects-table" initialPageSize={10}>
         <Table<SubjectRow>
           tableId="subjects-table"
           data={data}
           columns={columns}
           onRefresh={handleRefresh}
           getRowProps={getRowProps}
+          initialPageSize={10}
         />
-      </TableProvider>
     </div>
   );
 }
