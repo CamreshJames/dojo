@@ -1066,7 +1066,7 @@ function FilterModal<T>({
 }
 
 export function Table<T extends object>({
-    tableId,
+    // tableId,
     data,
     columns,
     loading = false,
