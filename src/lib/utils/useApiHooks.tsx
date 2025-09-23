@@ -54,7 +54,7 @@ export function useMutate<T>(endpoint: string, config: ApiHookConfig = {}) {
     setLoading(true);
     setError(null);
 
-    const effectiveMethod = method || config.defaultMethod || 'PATCH';
+    const effectiveMethod = method || config.defaultMethod || 'PUT';
     let response: ApiResponse<T>;
     switch (effectiveMethod) {
       case 'POST':
@@ -70,7 +70,7 @@ export function useMutate<T>(endpoint: string, config: ApiHookConfig = {}) {
         response = await apiClient.delete<T>(endpoint, { token: config.token });
         break;
       default:
-        response = await apiClient.patch<T>(endpoint, data, { token: config.token });
+        response = await apiClient.put<T>(endpoint, data, { token: config.token });
     }
 
     if (!response.success) {

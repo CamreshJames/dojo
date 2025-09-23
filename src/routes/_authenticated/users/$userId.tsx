@@ -1,4 +1,3 @@
-// $userId.tsx
 import { createFileRoute, useParams, useNavigate } from '@tanstack/react-router';
 import { useFetch, useMutate } from '@lib/utils/useApiHooks';
 import EditableField from '@lib/components/EditableField';
@@ -11,8 +10,7 @@ function UserDetail() {
   const [mutationError, setMutationError] = useState<string | null>(null);
   const isValidUserId = !isNaN(parseInt(userId));
 
-  // Fetch user data
-  const { data, loading, error } = useFetch<{ user: User }>(
+  const { data, loading, error, refetch } = useFetch<{ user: User }>(
     isValidUserId ? `/admin/users/${userId}` : '',
     {
       baseUrl: '/api',
@@ -22,15 +20,24 @@ function UserDetail() {
   );
   const user = data?.user;
 
-  // Initialize mutation hook
-  const { mutate, error: mutateError, loading: mutateLoading } = useMutate<User>(
-    `/admin/users/${userId}`,
+  const roleMutate = useMutate<User>(
+    `/admin/users/${userId}/role`,
     {
       baseUrl: '/api',
       token: import.meta.env.VITE_ADMIN_BEARER_TOKEN,
       defaultMethod: 'PUT',
     }
   );
+
+  const statusMutate = useMutate<User>(
+    `/admin/users/${userId}/status`,
+    {
+      baseUrl: '/api',
+      token: import.meta.env.VITE_ADMIN_BEARER_TOKEN,
+      defaultMethod: 'PUT',
+    }
+  );
+
   useEffect(() => {
     if (mutationError) {
       const timer = setTimeout(() => {
@@ -46,14 +53,25 @@ function UserDetail() {
         setMutationError('Invalid user ID or no user data');
         return false;
       }
+
+      if (field !== 'role' && field !== 'status') {
+        setMutationError(`Field ${field} is not editable`);
+        return false;
+      }
+
       console.log(`Updating field ${field} with value:`, value);
-      const success = await mutate({ [field]: value }, 'PUT'); 
+
+      const { mutate, error: mutateError } = field === 'role' ? roleMutate : statusMutate;
+
+      const success = await mutate({ [field]: value }, 'PUT');
       if (!success) {
-        setMutationError(mutateError || 'Failed to update user. Check endpoint and method.');
+        setMutationError(mutateError || `Failed to update ${field}. Check endpoint and method.`);
+      } else {
+        await refetch();
       }
       return success;
     },
-    [user, isValidUserId, mutate, mutateError]
+    [user, isValidUserId, roleMutate, statusMutate, refetch]
   );
 
   if (!isValidUserId) {
@@ -140,12 +158,12 @@ function UserDetail() {
           borderRadius: '4px',
           margin: '1rem 0',
           textAlign: 'center',
-          transition: 'opacity 0.5s ease-out', // Smooth fade-out
+          transition: 'opacity 0.5s ease-out',
         }}>
           Error updating user: {mutationError}
         </div>
       )}
-      {mutateLoading && (
+      {(roleMutate.loading || statusMutate.loading) && (
         <div className="mutation-loading" style={{
           padding: '1rem',
           background: '#d4edda',
@@ -167,7 +185,7 @@ function UserDetail() {
           {user.name}'s Profile
         </h1>
         <button
-          onClick={() => navigate({ to: '/users' })}
+          onClick={() => navigate({ to: '/admin/' })}
           style={{
             padding: '0.5rem 1rem',
             background: 'var(--primary)',
@@ -181,7 +199,7 @@ function UserDetail() {
           onMouseOver={(e) => (e.currentTarget.style.background = 'var(--primary-dark)')}
           onMouseOut={(e) => (e.currentTarget.style.background = 'var(--primary)')}
         >
-          Back to Users
+          Back to admin/
         </button>
       </div>
 
@@ -235,25 +253,12 @@ function UserDetail() {
         <div className="details-section" style={{ flex: '1', minWidth: '250px' }}>
           <div className="detail-item" style={{ marginBottom: '1rem' }}>
             <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Name</h3>
-            <EditableField
-              value={user.name}
-              onSave={handleFieldUpdate('name')}
-              validation={(value) => !value ? 'Name is required' : null}
-            />
+            <p style={{ margin: 0, color: '#333', fontSize: '1rem' }}>{user.name}</p>
           </div>
           
           <div className="detail-item" style={{ marginBottom: '1rem' }}>
             <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Email</h3>
-            <EditableField
-              value={user.email}
-              onSave={handleFieldUpdate('email')}
-              type="email"
-              validation={(value) => {
-                if (!value) return 'Email is required';
-                if (!/\S+@\S+\.\S+/.test(value)) return 'Invalid email format';
-                return null;
-              }}
-            />
+            <p style={{ margin: 0, color: '#333', fontSize: '1rem' }}>{user.email}</p>
           </div>
           
           <div className="detail-item" style={{ marginBottom: '1rem' }}>

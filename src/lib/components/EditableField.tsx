@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { SVGProps } from 'react';
-import type { JSX } from "react/jsx-runtime"
+import type { JSX } from "react/jsx-runtime";
 
 export function EditIcon(props: JSX.IntrinsicAttributes & SVGProps<SVGSVGElement>) {
     return (
@@ -19,7 +19,6 @@ interface EditableFieldProps {
     options?: { value: string; label: string }[];
     placeholder?: string;
     disabled?: boolean;
-    multiline?: boolean;
     validation?: (value: any) => string | null;
 }
 
@@ -75,18 +74,13 @@ const EditableField: React.FC<EditableFieldProps> = ({
         setLoading(true);
         setError(null);
 
-        try {
-            const success = await onSave(editValue);
-            if (success) {
-                setIsEditing(false);
-            } else {
-                setError('Failed to save changes');
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to save');
-        } finally {
-            setLoading(false);
+        const success = await onSave(editValue);
+        if (success) {
+            setIsEditing(false);
+        } else {
+            setError('Failed to save. Please check the server response.');
         }
+        setLoading(false);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -103,11 +97,9 @@ const EditableField: React.FC<EditableFieldProps> = ({
             const option = options.find(opt => opt.value === String(value));
             return option ? option.label : String(value);
         }
-
         if (type === 'date' && value) {
             return new Date(String(value)).toLocaleDateString();
         }
-
         return String(value || '');
     };
 
@@ -234,7 +226,7 @@ const EditableField: React.FC<EditableFieldProps> = ({
                         color: '#6c757d',
                     }}
                 >
-                    <EditIcon fill="#000" className="svg" height="20" width="20"/>
+                    <EditIcon fill="#000" className="svg" height="20" width="20" />
                 </span>
             )}
         </div>

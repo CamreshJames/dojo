@@ -31,7 +31,7 @@ class ApiClient {
       console.warn('No baseUrl provided, using endpoint directly:', endpoint);
     }
     const url = endpoint.startsWith('http') ? endpoint : `${base}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
-    console.log('Constructed URL:', url); // Debug: Log the final URL
+    // console.log('Constructed URL:', url); // Debug: Log the final URL
     return url;
   }
 
@@ -40,7 +40,7 @@ class ApiClient {
     if (config.token) {
       headers.Authorization = `Bearer ${config.token}`;
     }
-    console.log('Request Headers:', headers); // Debug: Log headers
+    // console.log('Request Headers:', headers); // Debug: Log headers
     return headers;
   }
 
@@ -51,10 +51,10 @@ class ApiClient {
     try {
       data = isJson ? await response.json() : await response.text();
     } catch (error) {
-      console.error('Response Parsing Error:', error); // Debug: Log parsing errors
+      // console.error('Response Parsing Error:', error); // Debug: Log parsing errors
       data = null;
     }
-    console.log('Response Data:', { status: response.status, data }); // Debug: Log response
+    // console.log('Response Data:', { status: response.status, data }); // Debug: Log response
     if (!response.ok) {
       return {
         success: false,
@@ -86,11 +86,11 @@ class ApiClient {
           ? config.body
           : JSON.stringify(config.body);
       }
-      console.log('Sending Request:', { url, method: config.method, body: config.body }); // Debug: Log request details
+      // console.log('Sending Request:', { url, method: config.method, body: config.body }); // Debug: Log request details
       const response = await fetch(url, requestConfig);
       return this.handleResponse<T>(response);
     } catch (error) {
-      console.error('API Request Error:', error); // Debug: Log request errors
+      // console.error('API Request Error:', error); // Debug: Log request errors
       return {
         success: false,
         data: null,
