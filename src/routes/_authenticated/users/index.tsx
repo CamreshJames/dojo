@@ -1,8 +1,8 @@
-// src/routes/_authenticated/users/index.tsx
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { Table, type Column } from '@lib/utils/table/Table';
+import { Table, type Column, useTableData } from '@lib/utils/table/Table';
 import { useAuth } from '@lib/contexts/AuthContext';
-import { useCallback, useEffect, useState } from 'react';
+import { createApiClient } from '@lib/utils/api';
+import { useCallback } from 'react';
 
 interface UserRow {
   id: number;
@@ -19,51 +19,54 @@ interface UserRow {
 function UsersIndex() {
   const { getToken } = useAuth();
   const navigate = useNavigate();
-  const [data, setData] = useState<UserRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const token = getToken();
 
-  const fetchUsers = useCallback(async () => {
-    const token = getToken();
+  const apiClient = createApiClient(import.meta.env.VITE_HOST_URL);
+
+  const fetcher = useCallback(async (params: { page: number; pageSize: number; sorts: any[]; filters: any[]; }) => {
     if (!token) {
-      setError('No auth token');
-      setLoading(false);
-      return;
+      return { records: [], total_count: 0, last_page: 1 };
+    }
+    
+    const queryParams = new URLSearchParams({
+      page: (params.page + 1).toString(),
+      page_size: params.pageSize.toString(),
+    });
+
+    if (params.sorts.length > 0) {
+      queryParams.append('sorts', JSON.stringify(params.sorts));
+    }
+    if (params.filters.length > 0) {
+      queryParams.append('filters', JSON.stringify(params.filters));
     }
 
-    try {
-      const query = new URLSearchParams({
-        page: '1',
-        pageSize: '100',
-      });
+    const endpoint = `/admin/users?${queryParams.toString()}`;
+    const response = await apiClient.get(endpoint, { token });
 
-      const response = await fetch(`${import.meta.env.VITE_HOST_URL}/admin/users?${query}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch users');
-
-      const result = await response.json();
-      setData(result.records);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
+    if (response.success) {
+      return {
+        records: response.data.records,
+        total_count: response.data.total_count,
+        last_page: response.data.last_page,
+      };
     }
-  }, [getToken]);
+    throw new Error(response.error || 'Failed to fetch users');
+  }, [apiClient, token]);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  const {
+    data, loading, error, pageCount, totalCount,
+    currentPage, pageSize, sorts, filters,
+    refresh, operations,
+  } = useTableData<UserRow>({
+    fetcher,
+    enabled: !!token,
+  });
 
   const columns: Column<UserRow>[] = [
     {
       key: 'avatar_url',
       label: 'Avatar',
-      render: (value) => value ? <img src={value} alt="Avatar" style={{ width: '40px', height: '40px', borderRadius: '50%' }} /> : 'No Avatar',
+      render: (value?: string) => value ? <img src={value} alt="Avatar" style={{ width: '40px', height: '40px', borderRadius: '50%' }} /> : 'No Avatar',
     },
     { key: 'id', label: 'ID', sortable: true, filterable: true },
     { key: 'name', label: 'Name', sortable: true, filterable: true },
@@ -74,24 +77,18 @@ function UsersIndex() {
       label: 'Status',
       sortable: true,
       filterable: true,
-      render: (value) => (
-        <span
-          style={{
-            padding: '0.25rem 0.5rem',
-            borderRadius: '4px',
-            backgroundColor:
-              value === 'approved' ? 'hsl(108, 100.00%, 43.30%)' :
-              value === 'pending' ? 'hsl(15, 3.60%, 78.00%)' :
-              'hsl(12, 100%, 50%)',
-            color: '#fff',
-          }}
-        >
+      render: (value: string) => (
+        <span style={{
+          padding: '0.25rem 0.5rem', borderRadius: '4px', color: '#fff',
+          backgroundColor:
+            value === 'approved' ? 'hsl(108, 100.00%, 43.30%)' :
+            value === 'pending' ? 'hsla(36, 68%, 23%, 1.00)' :
+            'hsl(12, 100%, 50%)',
+        }}>
           {value}
         </span>
       ),
     },
-    // { key: 'created_at', label: 'Created At', sortable: true },
-    // { key: 'updated_at', label: 'Updated At', sortable: true },
   ];
 
   const getRowProps = (row: UserRow) => ({
@@ -99,22 +96,27 @@ function UsersIndex() {
     className: row.status === 'rejected' ? 'row-rejected' : '',
   });
 
-  const handleRefresh = () => {
-    setLoading(true);
-    fetchUsers();
-  };
+  if (!token) return <div>Error: No auth token</div>;
 
   return (
     <div className="users-index" style={{ '--primary': 'hsl(12, 100%, 50%)' } as React.CSSProperties}>
       <h1 style={{ color: 'var(--primary)' }}>Users</h1>
-        <Table<UserRow>
-          tableId="users-table"
-          data={data}
-          columns={columns}
-          onRefresh={handleRefresh}
-          getRowProps={getRowProps}
-          initialPageSize={10}
-        />
+      <Table<UserRow>
+        tableId="users-table"
+        data={data}
+        columns={columns}
+        loading={loading}
+        error={error}
+        onRefresh={refresh}
+        getRowProps={getRowProps}
+        currentPage={currentPage}
+        totalPages={pageCount}
+        totalCount={totalCount}
+        pageSize={pageSize}
+        sorts={sorts}
+        filters={filters}
+        operations={operations}
+      />
     </div>
   );
 }

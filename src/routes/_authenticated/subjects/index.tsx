@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Table, type Column } from '@lib/utils/table/Table';
 import { useAuth } from '@lib/contexts/AuthContext';
-import { useCallback, useEffect, useState } from 'react';
+import { useFetch } from '@lib/utils/useApiHooks';
+import { useCallback } from 'react';
 
 interface SubjectRow {
   id: number;
@@ -17,45 +18,17 @@ interface SubjectRow {
 function SubjectsIndex() {
   const { getToken } = useAuth();
   const navigate = useNavigate();
-  const [data, setData] = useState<SubjectRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const token = getToken();
 
-  const fetchSubjects = useCallback(async () => {
-    const token = getToken();
-    if (!token) {
-      setError('No auth token');
-      setLoading(false);
-      return;
+  // Always call useFetch, but skip if no token
+  const { data, loading, error, refetch } = useFetch<{ records: SubjectRow[] }>(
+    '/admin/subjects?page=1&pageSize=5',
+    {
+      baseUrl: import.meta.env.VITE_HOST_URL,
+      token: token || undefined, // Ensure token is string or undefined
+      skip: !token,
     }
-
-    try {
-      const query = new URLSearchParams({
-        page: '1',
-        pageSize: '5',
-      });
-
-      const response = await fetch(`${import.meta.env.VITE_HOST_URL}/admin/subjects?${query}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch subjects');
-
-      const result = await response.json();
-      setData(result.records);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }, [getToken]);
-
-  useEffect(() => {
-    fetchSubjects();
-  }, [fetchSubjects]);
-
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  );
 
   const columns: Column<SubjectRow>[] = [
     { key: 'id', label: 'ID', sortable: true, filterable: true },
@@ -66,15 +39,13 @@ function SubjectsIndex() {
       label: 'Active',
       sortable: true,
       filterable: true,
-      render: (value) => (
+      render: (value: boolean) => (
         <span style={{ color: value ? 'hsl(12, 100%, 50%)' : 'gray' }}>
           {value ? 'Yes' : 'No'}
         </span>
       ),
     },
     { key: 'created_by_name', label: 'Created By', sortable: true, filterable: true },
-    // { key: 'created_at', label: 'Created At', sortable: true },
-    // { key: 'updated_at', label: 'Updated At', sortable: true },
   ];
 
   const getRowProps = (row: SubjectRow) => ({
@@ -82,22 +53,47 @@ function SubjectsIndex() {
     className: !row.is_active ? 'row-inactive' : '',
   });
 
-  const handleRefresh = () => {
-    setLoading(true);
-    fetchSubjects();
-  };
+  const handleRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
+  if (!token) return <div>Error: No auth token</div>;
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+  const records = data?.records || [];
 
   return (
     <div className="subjects-index" style={{ '--primary': 'hsl(12, 100%, 50%)' } as React.CSSProperties}>
-      <h1 style={{ color: 'var(--primary)' }}>Subjects</h1>
-        <Table<SubjectRow>
-          tableId="subjects-table"
-          data={data}
-          columns={columns}
-          onRefresh={handleRefresh}
-          getRowProps={getRowProps}
-          initialPageSize={10}
-        />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <h1 style={{ color: 'var(--primary)' }}>Subjects</h1>
+        <button
+          onClick={() => navigate({ to: '/subjects/create' })}
+          style={{
+            padding: '0.75rem 1.5rem',
+            background: 'hsl(12, 100%, 50%)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '0.25rem',
+            fontSize: 'clamp(0.8125rem, 2vw, 0.875rem)',
+            fontWeight: '500',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s ease',
+          }}
+          onMouseOver={(e) => e.currentTarget.style.background = 'rgb(26, 99, 116)'}
+          onMouseOut={(e) => e.currentTarget.style.background = 'hsl(12, 100%, 50%)'}
+        >
+          Create Subject
+        </button>
+      </div>
+      <Table<SubjectRow>
+        tableId="subjects-table"
+        data={records}
+        columns={columns}
+        onRefresh={handleRefresh}
+        getRowProps={getRowProps}
+        initialPageSize={10}
+      />
     </div>
   );
 }

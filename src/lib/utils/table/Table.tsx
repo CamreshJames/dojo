@@ -469,6 +469,8 @@ export interface TableProps<T> {
     totalPages?: number;
     totalCount?: number;
     pageSize?: number;
+    sorts?: Sort[];
+    filters?: Filter[];
 
     getRowProps?: (row: T) => RowProps<T>;
     onRefresh?: () => void;
@@ -481,13 +483,13 @@ export interface TableProps<T> {
 
 interface TableContextValue {
     sorts: Sort[];
-    setSorts: React.Dispatch<React.SetStateAction<Sort[]>>;
+    setSorts: (sorts: Sort[]) => void;
     filters: Filter[];
-    setFilters: React.Dispatch<React.SetStateAction<Filter[]>>;
+    setFilters: (filters: Filter[]) => void;
     pageIndex: number;
-    setPageIndex: React.Dispatch<React.SetStateAction<number>>;
+    setPageIndex: (page: number) => void;
     currentPageSize: number;
-    setCurrentPageSize: React.Dispatch<React.SetStateAction<number>>;
+    setCurrentPageSize: (size: number) => void;
 }
 
 const TableContext = createContext<TableContextValue | undefined>(undefined);
@@ -500,31 +502,70 @@ const useTableContext = () => {
     return context;
 };
 
-function TableProvider({
-    children,
-    initialPageSize = 10
-}: {
-    children: ReactNode;
-    initialPageSize?: number;
-}) {
-    const [sorts, setSorts] = useState<Sort[]>([]);
-    const [filters, setFilters] = useState<Filter[]>([]);
-    const [pageIndex, setPageIndex] = useState<number>(0);
-    const [currentPageSize, setCurrentPageSize] = useState<number>(initialPageSize);
+function TableProvider(props: { children: ReactNode } & Partial<TableProps<any>>) {
+    const {
+        children,
+        initialPageSize = 10,
+        currentPage: controlledPage = 0,
+        pageSize: controlledPageSize,
+        operations,
+        sorts: controlledSorts,
+        filters: controlledFilters,
+    } = props;
+
+    // Internal state for uncontrolled mode
+    const [uncontrolledSorts, setUncontrolledSorts] = useState<Sort[]>([]);
+    const [uncontrolledFilters, setUncontrolledFilters] = useState<Filter[]>([]);
+    const [uncontrolledPageIndex, setUncontrolledPageIndex] = useState<number>(0);
+    const [uncontrolledPageSize, setUncontrolledPageSize] = useState<number>(initialPageSize);
+
+    // Determine if the table is in controlled mode
+    const isControlled = !!operations;
+
+    // Use controlled values if provided, otherwise fall back to internal state
+    const sorts = isControlled ? controlledSorts! : uncontrolledSorts;
+    const filters = isControlled ? controlledFilters! : uncontrolledFilters;
+    const pageIndex = isControlled ? controlledPage : uncontrolledPageIndex;
+    const currentPageSize = isControlled ? controlledPageSize! : uncontrolledPageSize;
+
+    // Callbacks either trigger operations (controlled) or update internal state (uncontrolled)
+    const setSorts = useCallback((newSorts: Sort[]) => {
+        if (operations?.onSort) operations.onSort(newSorts);
+        else setUncontrolledSorts(newSorts);
+    }, [operations]);
+
+    const setFilters = useCallback((newFilters: Filter[]) => {
+        if (operations?.onFilter) {
+            operations.onFilter(newFilters);
+        } else {
+            setUncontrolledFilters(newFilters);
+            setUncontrolledPageIndex(0);
+        }
+    }, [operations]);
+
+    const setPageIndex = useCallback((newPage: number) => {
+        if (operations?.onPageChange) operations.onPageChange(newPage);
+        else setUncontrolledPageIndex(newPage);
+    }, [operations]);
+
+    const setCurrentPageSize = useCallback((newPageSize: number) => {
+        if (operations?.onPageSizeChange) {
+            operations.onPageSizeChange(newPageSize);
+        } else {
+            setUncontrolledPageSize(newPageSize);
+            setUncontrolledPageIndex(0);
+        }
+    }, [operations]);
+
+    const contextValue = {
+        sorts, setSorts,
+        filters, setFilters,
+        pageIndex, setPageIndex,
+        currentPageSize, setCurrentPageSize,
+    };
 
     return (
-        <TableContext.Provider
-            value={{
-                sorts,
-                setSorts,
-                filters,
-                setFilters,
-                pageIndex,
-                setPageIndex,
-                currentPageSize,
-                setCurrentPageSize,
-            }}
-        >
+        <TableContext.Provider value={contextValue}>
             {children}
         </TableContext.Provider>
     );
@@ -535,93 +576,42 @@ function TableContent<T extends object>({
     columns,
     loading = false,
     error = null,
-    currentPage = 0,
-    totalPages = 1,
-    totalCount = 0,
-    pageSize = 10,
+    totalPages: controlledTotalPages,
+    totalCount: controlledTotalCount,
     getRowProps,
     onRefresh,
     showToolbar = true,
     showPagination = true,
     className = '',
-    operations
-}: Omit<TableProps<T>, 'initialPageSize' | 'tableId'>) {
+}: Omit<TableProps<T>, 'tableId' | 'initialPageSize' | 'currentPage' | 'pageSize' | 'sorts' | 'filters' | 'operations'>) {
     const {
-        sorts,
-        setSorts,
-        filters,
-        setFilters,
-        pageIndex,
-        setPageIndex,
-        currentPageSize,
-        setCurrentPageSize,
+        sorts, setSorts,
+        filters, setFilters,
+        pageIndex, setPageIndex,
+        currentPageSize, setCurrentPageSize,
     } = useTableContext();
 
     const [sortModalOpen, setSortModalOpen] = useState(false);
     const [filterModalOpen, setFilterModalOpen] = useState(false);
 
-    const lastOperationCall = useRef<{
-        sorts?: Sort[];
-        filters?: Filter[];
-        page?: number;
-        pageSize?: number;
-    }>({});
-
-    useEffect(() => {
-        if (currentPageSize !== pageSize) {
-            setCurrentPageSize(pageSize);
-        }
-    }, [pageSize, currentPageSize, setCurrentPageSize]);
-
-    useEffect(() => {
-        if (pageIndex !== currentPage) {
-            setPageIndex(currentPage);
-        }
-    }, [currentPage, pageIndex, setPageIndex]);
-
-    useEffect(() => {
-        if (!operations) return;
-
-        const current = { sorts, filters, page: pageIndex, pageSize: currentPageSize };
-        const last = lastOperationCall.current;
-
-        if (JSON.stringify(current.sorts) !== JSON.stringify(last.sorts) && operations.onSort) {
-            operations.onSort(sorts);
-        }
-
-        if (JSON.stringify(current.filters) !== JSON.stringify(last.filters) && operations.onFilter) {
-            operations.onFilter(filters);
-        }
-
-        if (current.page !== last.page && operations.onPageChange) {
-            operations.onPageChange(pageIndex);
-        }
-
-        if (current.pageSize !== last.pageSize && operations.onPageSizeChange) {
-            operations.onPageSizeChange(currentPageSize);
-        }
-
-        lastOperationCall.current = current;
-    }, [sorts, filters, pageIndex, currentPageSize, operations]);
+    const isControlled = !!controlledTotalPages;
 
     const handleColumnSort = useCallback((columnKey: string) => {
-        setSorts(prev => {
+        const newSorts = ((prev: Sort[]) => {
             const existingIndex = prev.findIndex(s => s.column === columnKey);
-
             if (existingIndex >= 0) {
                 const existing = prev[existingIndex];
                 if (existing.direction === 'asc') {
-                    return prev.map((s, i) =>
-                        i === existingIndex ? { ...s, direction: 'desc' } : s
-                    );
+                    return prev.map((s, i) => i === existingIndex ? { ...s, direction: 'desc' as const } : s);
                 } else {
                     return prev.filter((_, i) => i !== existingIndex);
                 }
             } else {
-                return [...prev, { column: columnKey, direction: 'asc' }];
+                return [...prev, { column: columnKey, direction: 'asc' as const }];
             }
-        });
-    }, [setSorts]);
+        })(sorts);
+        setSorts(newSorts);
+    }, [sorts, setSorts]);
 
     const getSortIndicator = useCallback((columnKey: string) => {
         const sort = sorts.find(s => s.column === columnKey);
@@ -629,30 +619,22 @@ function TableContent<T extends object>({
     }, [sorts]);
 
     const processedData = useMemo(() => {
-        if (operations) return data;
+        if (isControlled) return data;
 
         let result = [...data];
 
         if (filters.length > 0) {
-            result = result.filter(row => {
-                return filters.every(({ column, operator, value }) => {
-                    const cellValue = String(row[column as keyof T]).toLowerCase();
-                    const filterValue = value.toLowerCase();
-
-                    switch (operator) {
-                        case 'equals':
-                            return cellValue === filterValue;
-                        case 'contains':
-                            return cellValue.includes(filterValue);
-                        case 'greater_than':
-                            return Number(cellValue) > Number(filterValue);
-                        case 'less_than':
-                            return Number(cellValue) < Number(filterValue);
-                        default:
-                            return true;
-                    }
-                });
-            });
+            result = result.filter(row => filters.every(({ column, operator, value }) => {
+                const cellValue = String(row[column as keyof T] ?? '').toLowerCase();
+                const filterValue = value.toLowerCase();
+                switch (operator) {
+                    case 'equals': return cellValue === filterValue;
+                    case 'contains': return cellValue.includes(filterValue);
+                    case 'greater_than': return Number(cellValue) > Number(filterValue);
+                    case 'less_than': return Number(cellValue) < Number(filterValue);
+                    default: return true;
+                }
+            }));
         }
 
         if (sorts.length > 0) {
@@ -666,127 +648,66 @@ function TableContent<T extends object>({
                 return 0;
             });
         }
-
+        
         const startIndex = pageIndex * currentPageSize;
         return result.slice(startIndex, startIndex + currentPageSize);
-    }, [data, filters, sorts, pageIndex, currentPageSize, operations]);
+    }, [data, filters, sorts, pageIndex, currentPageSize, isControlled]);
 
     const paginationInfo = useMemo(() => {
-        if (operations) {
+        if (isControlled) {
             return {
-                totalPages,
-                totalCount,
-                currentPage: pageIndex,
-                startRecord: pageIndex * currentPageSize + 1,
-                endRecord: Math.min((pageIndex + 1) * currentPageSize, totalCount)
+                totalPages: controlledTotalPages!,
+                totalCount: controlledTotalCount!,
+                startRecord: controlledTotalCount! > 0 ? pageIndex * currentPageSize + 1 : 0,
+                endRecord: Math.min((pageIndex + 1) * currentPageSize, controlledTotalCount!)
             };
         }
 
-        let filteredCount = data.length;
-        if (filters.length > 0) {
-            filteredCount = data.filter(row => {
-                return filters.every(({ column, operator, value }) => {
-                    const cellValue = String(row[column as keyof T]).toLowerCase();
-                    const filterValue = value.toLowerCase();
-                    switch (operator) {
-                        case 'equals': return cellValue === filterValue;
-                        case 'contains': return cellValue.includes(filterValue);
-                        case 'greater_than': return Number(cellValue) > Number(filterValue);
-                        case 'less_than': return Number(cellValue) < Number(filterValue);
-                        default: return true;
-                    }
-                });
-            }).length;
-        }
-
-        const clientTotalPages = Math.max(1, Math.ceil(filteredCount / currentPageSize));
+        // Client-side pagination logic
+        const totalCount = data.length;
+        const totalPages = Math.max(1, Math.ceil(totalCount / currentPageSize));
         return {
-            totalPages: clientTotalPages,
-            totalCount: filteredCount,
-            currentPage: pageIndex,
-            startRecord: pageIndex * currentPageSize + 1,
-            endRecord: Math.min((pageIndex + 1) * currentPageSize, filteredCount)
+            totalPages: totalPages,
+            totalCount: totalCount,
+            startRecord: totalCount > 0 ? pageIndex * currentPageSize + 1 : 0,
+            endRecord: Math.min((pageIndex + 1) * currentPageSize, totalCount)
         };
-    }, [data, filters, pageIndex, currentPageSize, operations, totalPages, totalCount]);
-
-    const clearFilters = useCallback(() => {
-        setFilters([]);
-        setPageIndex(0);
-    }, [setFilters, setPageIndex]);
-
-    const clearSorts = useCallback(() => {
-        setSorts([]);
-    }, [setSorts]);
-
-    const handlePageChange = useCallback((newPage: number) => {
-        setPageIndex(newPage);
-    }, [setPageIndex]);
-
-    const handlePageSizeChange = useCallback((newPageSize: number) => {
-        setCurrentPageSize(newPageSize);
-        setPageIndex(0);
-    }, [setCurrentPageSize, setPageIndex]);
+    }, [data, pageIndex, currentPageSize, isControlled, controlledTotalPages, controlledTotalCount]);
 
     return (
         <>
             <style>{styles}</style>
             <div className={`universal-table ${className} ${loading ? 'table-loading' : ''}`}>
-                {loading && (
-                    <div className="loading-overlay">
-                        <div className="loading-spinner"></div>
-                    </div>
-                )}
+                {loading && <div className="loading-overlay"><div className="loading-spinner"></div></div>}
 
                 {error && (
                     <div className="table-error">
                         Error: {error}
-                        {onRefresh && (
-                            <button
-                                onClick={onRefresh}
-                                style={{ marginLeft: '1rem', padding: '0.25rem 0.5rem' }}
-                            >
-                                Retry
-                            </button>
-                        )}
+                        {onRefresh && <button onClick={onRefresh} style={{ marginLeft: '1rem' }}>Retry</button>}
                     </div>
                 )}
 
                 {showToolbar && (
                     <div className="table-toolbar">
                         <div className="toolbar-actions-left">
-                            {onRefresh && (
-                                <button className="action-btn" onClick={onRefresh} disabled={loading}>
-                                    <RefreshIcon />
-                                    Refresh
-                                </button>
-                            )}
+                            {onRefresh && <button className="action-btn" onClick={onRefresh} disabled={loading}><RefreshIcon />Refresh</button>}
                         </div>
                         <div className="toolbar-actions-right">
                             <div className="filter-btn-wrapper">
-                                <button className="action-btn" onClick={() => setFilterModalOpen(true)}>
-                                    <FilterIcon />
-                                    Filter
-                                </button>
+                                <button className="action-btn" onClick={() => setFilterModalOpen(true)}><FilterIcon />Filter</button>
                                 {filters.length > 0 && (
                                     <>
                                         <span className="badge">{filters.length}</span>
-                                        <button className="clear-filters-btn" onClick={clearFilters}>
-                                            <CancelModalIcon />
-                                        </button>
+                                        <button className="clear-filters-btn" onClick={() => setFilters([])}><CancelModalIcon /></button>
                                     </>
                                 )}
                             </div>
                             <div className="sort-btn-wrapper">
-                                <button className="action-btn" onClick={() => setSortModalOpen(true)}>
-                                    <SortIcon />
-                                    Sort
-                                </button>
+                                <button className="action-btn" onClick={() => setSortModalOpen(true)}><SortIcon />Sort</button>
                                 {sorts.length > 0 && (
                                     <>
                                         <span className="badge">{sorts.length}</span>
-                                        <button className="clear-filters-btn" onClick={clearSorts}>
-                                            <CancelModalIcon />
-                                        </button>
+                                        <button className="clear-filters-btn" onClick={() => setSorts([])}><CancelModalIcon /></button>
                                     </>
                                 )}
                             </div>
@@ -799,17 +720,11 @@ function TableContent<T extends object>({
                         <thead>
                             <tr>
                                 {columns.map(col => (
-                                    <th
-                                        key={String(col.key)}
+                                    <th key={String(col.key)}
                                         onClick={col.sortable ? () => handleColumnSort(String(col.key)) : undefined}
-                                        style={{ cursor: col.sortable ? 'pointer' : 'default' }}
-                                    >
+                                        style={{ cursor: col.sortable ? 'pointer' : 'default' }}>
                                         {col.label}
-                                        {col.sortable && (
-                                            <span className="sort-indicator">
-                                                {getSortIndicator(String(col.key))}
-                                            </span>
-                                        )}
+                                        {col.sortable && <span className="sort-indicator">{getSortIndicator(String(col.key))}</span>}
                                     </th>
                                 ))}
                             </tr>
@@ -821,10 +736,7 @@ function TableContent<T extends object>({
                                     <tr key={idx} className={rowClassName} onClick={() => onClick?.(row)}>
                                         {columns.map(col => (
                                             <td key={String(col.key)}>
-                                                {col.render
-                                                    ? col.render(row[col.key as keyof T], row)
-                                                    : String(row[col.key as keyof T] ?? '')
-                                                }
+                                                {col.render ? col.render(row[col.key as keyof T], row) : String(row[col.key as keyof T] ?? '')}
                                             </td>
                                         ))}
                                     </tr>
@@ -834,48 +746,20 @@ function TableContent<T extends object>({
                     </table>
                 </div>
 
-                {showPagination && (
+                {showPagination && paginationInfo.totalCount > 0 && (
                     <div className="table-pagination">
                         <div className="pagination-info">
                             Showing {paginationInfo.startRecord}-{paginationInfo.endRecord} of {paginationInfo.totalCount} records
                         </div>
                         <div className="pagination-controls">
-                            <button
-                                onClick={() => handlePageChange(0)}
-                                disabled={paginationInfo.currentPage === 0 || loading}
-                            >
-                                First
-                            </button>
-                            <button
-                                onClick={() => handlePageChange(paginationInfo.currentPage - 1)}
-                                disabled={paginationInfo.currentPage === 0 || loading}
-                            >
-                                Prev
-                            </button>
-                            <span>
-                                Page {paginationInfo.currentPage + 1} of {paginationInfo.totalPages}
-                            </span>
-                            <button
-                                onClick={() => handlePageChange(paginationInfo.currentPage + 1)}
-                                disabled={paginationInfo.currentPage >= paginationInfo.totalPages - 1 || loading}
-                            >
-                                Next
-                            </button>
-                            <button
-                                onClick={() => handlePageChange(paginationInfo.totalPages - 1)}
-                                disabled={paginationInfo.currentPage >= paginationInfo.totalPages - 1 || loading}
-                            >
-                                Last
-                            </button>
+                            <button onClick={() => setPageIndex(0)} disabled={pageIndex === 0 || loading}>First</button>
+                            <button onClick={() => setPageIndex(pageIndex - 1)} disabled={pageIndex === 0 || loading}>Prev</button>
+                            <span>Page {pageIndex + 1} of {paginationInfo.totalPages}</span>
+                            <button onClick={() => setPageIndex(pageIndex + 1)} disabled={pageIndex >= paginationInfo.totalPages - 1 || loading}>Next</button>
+                            <button onClick={() => setPageIndex(paginationInfo.totalPages - 1)} disabled={pageIndex >= paginationInfo.totalPages - 1 || loading}>Last</button>
                         </div>
-                        <select
-                            value={currentPageSize}
-                            onChange={e => handlePageSizeChange(Number(e.target.value))}
-                            disabled={loading}
-                        >
-                            {[10, 20, 50, 100].map(ps => (
-                                <option key={ps} value={ps}>Show {ps}</option>
-                            ))}
+                        <select value={currentPageSize} onChange={e => setCurrentPageSize(Number(e.target.value))} disabled={loading}>
+                            {[10, 20, 50, 100].map(ps => <option key={ps} value={ps}>Show {ps}</option>)}
                         </select>
                     </div>
                 )}
@@ -884,386 +768,246 @@ function TableContent<T extends object>({
                     isOpen={sortModalOpen}
                     onClose={() => setSortModalOpen(false)}
                     columns={columns}
+                    onApply={setSorts}
+                    currentSorts={sorts}
                 />
                 <FilterModal
                     isOpen={filterModalOpen}
                     onClose={() => setFilterModalOpen(false)}
                     columns={columns}
+                    onApply={setFilters}
+                    currentFilters={filters}
                 />
             </div>
         </>
     );
 }
 
-function SortModal<T>({
-    isOpen,
-    onClose,
-    columns
-}: {
-    isOpen: boolean;
-    onClose: () => void;
-    columns: Column<T>[];
-}) {
-    const { sorts, setSorts } = useTableContext();
+function SortModal<T>({ isOpen, onClose, columns, onApply, currentSorts }: { isOpen: boolean; onClose: () => void; columns: Column<T>[]; onApply: (sorts: Sort[]) => void; currentSorts: Sort[]; }) {
+    const [localSorts, setLocalSorts] = useState<Sort[]>([]);
 
-    const addSort = useCallback(() => {
-        setSorts(prev => [...prev, { column: '', direction: 'asc' }]);
-    }, [setSorts]);
+    useEffect(() => { if (isOpen) setLocalSorts(currentSorts); }, [isOpen, currentSorts]);
 
+    const addSort = useCallback(() => setLocalSorts(prev => [...prev, { column: '', direction: 'asc' }]), []);
     const updateSort = useCallback((index: number, field: 'column' | 'direction', value: string) => {
-        setSorts(prev => prev.map((s, i) =>
-            i === index ? { ...s, [field]: value } : s
-        ));
-    }, [setSorts]);
-
-    const removeSort = useCallback((index: number) => {
-        setSorts(prev => prev.filter((_, i) => i !== index));
-    }, [setSorts]);
-
-    const applySorts = useCallback(() => {
-        onClose();
-    }, [onClose]);
+        setLocalSorts(prev => prev.map((s, i) => i === index ? { ...s, [field]: value } : s));
+    }, []);
+    const removeSort = useCallback((index: number) => setLocalSorts(prev => prev.filter((_, i) => i !== index)), []);
+    const handleApply = useCallback(() => { onApply(localSorts); onClose(); }, [onApply, localSorts, onClose]);
 
     if (!isOpen) return null;
 
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal" onClick={e => e.stopPropagation()}>
-                <div className="modal-head">
-                    <h3>Sort By</h3>
-                    <button className="close-btn" onClick={onClose}>×</button>
-                </div>
+                <div className="modal-head"><h3>Sort By</h3><button className="close-btn" onClick={onClose}>×</button></div>
                 <div className="modal-body">
-                    {sorts.map((sort, index) => (
+                    {localSorts.map((sort, index) => (
                         <div key={index} className="sort-item">
-                            <select
-                                value={sort.column}
-                                onChange={e => updateSort(index, 'column', e.target.value)}
-                            >
+                            <select value={sort.column} onChange={e => updateSort(index, 'column', e.target.value)}>
                                 <option value="">Select Column</option>
-                                {columns
-                                    .filter(c => c.sortable)
-                                    .map(c => (
-                                        <option key={String(c.key)} value={String(c.key)}>
-                                            {c.label}
-                                        </option>
-                                    ))
-                                }
+                                {columns.filter(c => c.sortable).map(c => <option key={String(c.key)} value={String(c.key)}>{c.label}</option>)}
                             </select>
-                            <select
-                                value={sort.direction}
-                                onChange={e => updateSort(index, 'direction', e.target.value)}
-                            >
-                                <option value="asc">Ascending</option>
-                                <option value="desc">Descending</option>
+                            <select value={sort.direction} onChange={e => updateSort(index, 'direction', e.target.value)}>
+                                <option value="asc">Ascending</option><option value="desc">Descending</option>
                             </select>
-                            <button className="delete-btn" onClick={() => removeSort(index)}>
-                                <TrashIcon />
-                            </button>
+                            <button className="delete-btn" onClick={() => removeSort(index)}><TrashIcon /></button>
                         </div>
                     ))}
-                    <button className="add-btn" onClick={addSort}>
-                        <AddIcon />
-                        Add Sort
-                    </button>
+                    <button className="add-btn" onClick={addSort}><AddIcon />Add Sort</button>
                 </div>
                 <div className="modal-footer">
                     <button className="cancel-btn" onClick={onClose}>Cancel</button>
-                    <button className="apply-btn" onClick={applySorts}>Apply</button>
+                    <button className="apply-btn" onClick={handleApply}>Apply</button>
                 </div>
             </div>
         </div>
     );
 }
 
-function FilterModal<T>({
-    isOpen,
-    onClose,
-    columns
-}: {
-    isOpen: boolean;
-    onClose: () => void;
-    columns: Column<T>[];
-}) {
-    const { filters, setFilters } = useTableContext();
+function FilterModal<T>({ isOpen, onClose, columns, onApply, currentFilters }: { isOpen: boolean; onClose: () => void; columns: Column<T>[]; onApply: (filters: Filter[]) => void; currentFilters: Filter[]; }) {
+    const [localFilters, setLocalFilters] = useState<Filter[]>([]);
 
-    const addFilter = useCallback(() => {
-        setFilters(prev => [...prev, { column: '', operator: 'equals', value: '' }]);
-    }, [setFilters]);
-
+    useEffect(() => { if (isOpen) setLocalFilters(currentFilters); }, [isOpen, currentFilters]);
+    
+    const addFilter = useCallback(() => setLocalFilters(prev => [...prev, { column: '', operator: 'equals', value: '' }]), []);
     const updateFilter = useCallback((index: number, field: 'column' | 'operator' | 'value', value: string) => {
-        setFilters(prev => prev.map((f, i) =>
-            i === index ? { ...f, [field]: value } : f
-        ));
-    }, [setFilters]);
-
-    const removeFilter = useCallback((index: number) => {
-        setFilters(prev => prev.filter((_, i) => i !== index));
-    }, [setFilters]);
-
-    const applyFilters = useCallback(() => {
-        onClose();
-    }, [onClose]);
+        setLocalFilters(prev => prev.map((f, i) => i === index ? { ...f, [field]: value } : f));
+    }, []);
+    const removeFilter = useCallback((index: number) => setLocalFilters(prev => prev.filter((_, i) => i !== index)), []);
+    const handleApply = useCallback(() => { onApply(localFilters); onClose(); }, [onApply, localFilters, onClose]);
 
     if (!isOpen) return null;
 
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal" onClick={e => e.stopPropagation()}>
-                <div className="modal-head">
-                    <h3>Filters</h3>
-                    <button className="close-btn" onClick={onClose}>×</button>
-                </div>
+                <div className="modal-head"><h3>Filters</h3><button className="close-btn" onClick={onClose}>×</button></div>
                 <div className="modal-body">
-                    {filters.map((filter, index) => (
+                    {localFilters.map((filter, index) => (
                         <div key={index} className="filter-item">
-                            <select
-                                value={filter.column}
-                                onChange={e => updateFilter(index, 'column', e.target.value)}
-                            >
+                            <select value={filter.column} onChange={e => updateFilter(index, 'column', e.target.value)}>
                                 <option value="">Select Column</option>
-                                {columns
-                                    .filter(c => c.filterable)
-                                    .map(c => (
-                                        <option key={String(c.key)} value={String(c.key)}>
-                                            {c.label}
-                                        </option>
-                                    ))
-                                }
+                                {columns.filter(c => c.filterable).map(c => <option key={String(c.key)} value={String(c.key)}>{c.label}</option>)}
                             </select>
-                            <select
-                                value={filter.operator}
-                                onChange={e => updateFilter(index, 'operator', e.target.value)}
-                            >
-                                <option value="equals">Equals</option>
-                                <option value="contains">Contains</option>
-                                <option value="greater_than">Greater Than</option>
-                                <option value="less_than">Less Than</option>
+                            <select value={filter.operator} onChange={e => updateFilter(index, 'operator', e.target.value)}>
+                                <option value="equals">Equals</option><option value="contains">Contains</option>
+                                <option value="greater_than">Greater Than</option><option value="less_than">Less Than</option>
                             </select>
-                            <input
-                                type="text"
-                                value={filter.value}
-                                onChange={e => updateFilter(index, 'value', e.target.value)}
-                                placeholder="Value"
-                            />
-                            <button className="delete-btn" onClick={() => removeFilter(index)}>
-                                <TrashIcon />
-                            </button>
+                            <input type="text" value={filter.value} onChange={e => updateFilter(index, 'value', e.target.value)} placeholder="Value"/>
+                            <button className="delete-btn" onClick={() => removeFilter(index)}><TrashIcon /></button>
                         </div>
                     ))}
-                    <button className="add-btn" onClick={addFilter}>
-                        <AddIcon />
-                        Add Filter
-                    </button>
+                    <button className="add-btn" onClick={addFilter}><AddIcon />Add Filter</button>
                 </div>
                 <div className="modal-footer">
                     <button className="cancel-btn" onClick={onClose}>Cancel</button>
-                    <button className="apply-btn" onClick={applyFilters}>Apply</button>
+                    <button className="apply-btn" onClick={handleApply}>Apply</button>
                 </div>
             </div>
         </div>
     );
 }
 
-export function Table<T extends object>({
-    // tableId,
-    data,
-    columns,
-    loading = false,
-    error = null,
-    initialPageSize = 10,
-    currentPage = 0,
-    totalPages = 1,
-    totalCount = 0,
-    pageSize = 10,
-    getRowProps,
-    onRefresh,
-    showToolbar = true,
-    showPagination = true,
-    className = '',
-    operations
-}: TableProps<T>) {
+export function Table<T extends object>(props: TableProps<T>) {
     return (
-        <TableProvider initialPageSize={initialPageSize}>
-            <TableContent
-                data={data}
-                columns={columns}
-                loading={loading}
-                error={error}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalCount={totalCount}
-                pageSize={pageSize}
-                getRowProps={getRowProps}
-                onRefresh={onRefresh}
-                showToolbar={showToolbar}
-                showPagination={showPagination}
-                className={className}
-                operations={operations}
-            />
+        <TableProvider {...props}>
+            <TableContent {...props} />
         </TableProvider>
     );
 }
 
-interface DataFetcherParams {
-    page: number;
-    pageSize: number;
-    sorts: Sort[];
-    filters: Filter[];
-}
+// Fixed useTableData hook with stable references and proper dependency management
+interface DataFetcherParams { page: number; pageSize: number; sorts: Sort[]; filters: Filter[]; }
+interface DataFetcherResponse<T> { records: T[]; total_count: number; last_page: number; }
+interface UseTableDataOptions<T> { fetcher: (params: DataFetcherParams) => Promise<DataFetcherResponse<T>>; initialPageSize?: number; enabled?: boolean; }
+interface UseTableDataReturn<T> { data: T[]; loading: boolean; error: string | null; pageCount: number; totalCount: number; currentPage: number; pageSize: number; sorts: Sort[]; filters: Filter[]; refresh: () => void; operations: TableOperations; }
 
-interface DataFetcherResponse<T> {
-    records: T[];
-    total_count: number;
-    last_page: number;
-}
-
-interface UseTableDataOptions<T> {
-    fetcher: (params: DataFetcherParams) => Promise<DataFetcherResponse<T>>;
-    initialPageSize?: number;
-    enabled?: boolean;
-}
-
-interface UseTableDataReturn<T> {
-    data: T[];
-    loading: boolean;
-    error: string | null;
-    pageCount: number;
-    totalCount: number;
-    currentPage: number;
-    refresh: () => void;
-    setSorts: (sorts: Sort[]) => void;
-    setFilters: (filters: Filter[]) => void;
-    setPage: (page: number) => void;
-    setPageSize: (pageSize: number) => void;
-    operations: TableOperations;
-}
-
-export function useTableData<T>({
-    fetcher,
-    initialPageSize = 10,
-    enabled = true
-}: UseTableDataOptions<T>): UseTableDataReturn<T> {
+export function useTableData<T>({ fetcher, initialPageSize = 10, enabled = true }: UseTableDataOptions<T>): UseTableDataReturn<T> {
     const [data, setData] = useState<T[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [pageCount, setPageCount] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
+    
+    // Stable state for parameters
+    const [currentPage, setCurrentPage] = useState(0);
+    const [pageSize, setPageSize] = useState(initialPageSize);
+    const [sorts, setSorts] = useState<Sort[]>([]);
+    const [filters, setFilters] = useState<Filter[]>([]);
+    
+    // Use ref to track if we've fetched with current params to prevent duplicate calls
+    const lastFetchParamsRef = useRef<string>('');
+    const isFetchingRef = useRef(false);
 
-    const [params, setParams] = useState<DataFetcherParams>({
-        page: 0,
-        pageSize: initialPageSize,
-        sorts: [],
-        filters: [],
-    });
-
-    const stableFetcher = useRef(fetcher);
-    stableFetcher.current = fetcher;
-
-    const fetchData = useCallback(async (fetchParams: DataFetcherParams) => {
+    // Create stable fetch function
+    const fetchData = useCallback(async (params: DataFetcherParams, force = false) => {
         if (!enabled) return;
-
+        
+        const paramKey = JSON.stringify(params);
+        
+        // Prevent duplicate fetches unless forced
+        if (!force && (paramKey === lastFetchParamsRef.current || isFetchingRef.current)) {
+            return;
+        }
+        
+        isFetchingRef.current = true;
         setLoading(true);
         setError(null);
-
+        
         try {
-            const response = await stableFetcher.current(fetchParams);
+            const response = await fetcher(params);
             setData(response.records);
             setPageCount(response.last_page);
             setTotalCount(response.total_count);
+            lastFetchParamsRef.current = paramKey;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to fetch data';
             setError(errorMessage);
-            setData([]);
-            setPageCount(1);
-            setTotalCount(0);
         } finally {
             setLoading(false);
+            isFetchingRef.current = false;
         }
-    }, [enabled]);
+    }, [enabled, fetcher]);
 
+    // Create current params object
+    const currentParams = useMemo(() => ({
+        page: currentPage,
+        pageSize,
+        sorts,
+        filters,
+    }), [currentPage, pageSize, sorts, filters]);
+
+    // Fetch when params change, with debouncing
     useEffect(() => {
-        if (!enabled) return;
-
         const timeoutId = setTimeout(() => {
-            fetchData(params);
+            fetchData(currentParams);
         }, 300);
 
         return () => clearTimeout(timeoutId);
-    }, [params, fetchData, enabled]);
+    }, [fetchData, currentParams]);
 
+    // Create stable operations object
     const operations: TableOperations = useMemo(() => ({
-        onSort: (sorts: Sort[]) => {
-            setParams(prev => ({ ...prev, sorts, page: 0 }));
+        onSort: (newSorts: Sort[]) => {
+            setSorts(newSorts);
+            setCurrentPage(0); // Reset to first page when sorting changes
         },
-        onFilter: (filters: Filter[]) => {
-            setParams(prev => ({ ...prev, filters, page: 0 }));
+        onFilter: (newFilters: Filter[]) => {
+            setFilters(newFilters);
+            setCurrentPage(0); // Reset to first page when filters change
         },
         onPageChange: (page: number) => {
-            setParams(prev => ({ ...prev, page }));
+            setCurrentPage(page);
         },
-        onPageSizeChange: (pageSize: number) => {
-            setParams(prev => ({ ...prev, pageSize, page: 0 }));
+        onPageSizeChange: (newPageSize: number) => {
+            setPageSize(newPageSize);
+            setCurrentPage(0); // Reset to first page when page size changes
         },
     }), []);
-
-    const setSorts = useCallback((sorts: Sort[]) => {
-        setParams(prev => ({ ...prev, sorts, page: 0 }));
-    }, []);
-
-    const setFilters = useCallback((filters: Filter[]) => {
-        setParams(prev => ({ ...prev, filters, page: 0 }));
-    }, []);
-
-    const setPage = useCallback((page: number) => {
-        setParams(prev => ({ ...prev, page }));
-    }, []);
-
-    const setPageSize = useCallback((pageSize: number) => {
-        setParams(prev => ({ ...prev, pageSize, page: 0 }));
-    }, []);
-
+    
+    // Create stable refresh function
     const refresh = useCallback(() => {
-        fetchData(params);
-    }, [fetchData, params]);
+        fetchData(currentParams, true); // Force refresh
+    }, [fetchData, currentParams]);
 
-    return {
-        data,
-        loading,
-        error,
-        pageCount,
-        totalCount,
-        currentPage: params.page,
-        refresh,
-        setSorts,
-        setFilters,
-        setPage,
-        setPageSize,
-        operations,
+    return { 
+        data, 
+        loading, 
+        error, 
+        pageCount, 
+        totalCount, 
+        currentPage, 
+        pageSize, 
+        sorts, 
+        filters, 
+        refresh, 
+        operations 
     };
 }
 
 function Demo() {
-    const sampleData = [
-        { id: 1, name: 'John Doe', age: 30, email: 'john@example.com', status: 'Active' },
-        { id: 2, name: 'Jane Smith', age: 25, email: 'jane@example.com', status: 'Inactive' },
-        { id: 3, name: 'Bob Johnson', age: 35, email: 'bob@example.com', status: 'Active' },
-        { id: 4, name: 'Alice Brown', age: 28, email: 'alice@example.com', status: 'Pending' },
-        { id: 5, name: 'Charlie Wilson', age: 42, email: 'charlie@example.com', status: 'Active' },
-        { id: 6, name: 'Diana Prince', age: 31, email: 'diana@example.com', status: 'Active' },
-        { id: 7, name: 'Edward Clark', age: 29, email: 'edward@example.com', status: 'Inactive' },
-        { id: 8, name: 'Fiona Davis', age: 33, email: 'fiona@example.com', status: 'Pending' },
-        { id: 9, name: 'George Miller', age: 27, email: 'george@example.com', status: 'Active' },
-        { id: 10, name: 'Helen White', age: 36, email: 'helen@example.com', status: 'Inactive' },
-        { id: 11, name: 'Ian Thompson', age: 24, email: 'ian@example.com', status: 'Active' },
-        { id: 12, name: 'Julia Garcia', age: 38, email: 'julia@example.com', status: 'Pending' },
+    // A simple demo using client-side data, sorting, and pagination.
+    const kenyanSampleData = [
+        { id: 1, name: 'Wanjiku Kamau', age: 34, city: 'Nairobi', status: 'Active' },
+        { id: 2, name: 'Otieno Odhiambo', age: 29, city: 'Kisumu', status: 'Inactive' },
+        { id: 3, name: 'Akinyi Onyango', age: 42, city: 'Mombasa', status: 'Active' },
+        { id: 4, name: 'Kiprono Cheruiyot', age: 25, city: 'Eldoret', status: 'Pending' },
+        { id: 5, name: 'Naliaka Wafula', age: 38, city: 'Nakuru', status: 'Active' },
+        { id: 6, name: 'Muthoni Njeri', age: 31, city: 'Nairobi', status: 'Active' },
+        { id: 7, name: 'Juma Omondi', age: 22, city: 'Kisumu', status: 'Inactive' },
+        { id: 8, name: 'Fatuma Ali', age: 45, city: 'Mombasa', status: 'Pending' },
+        { id: 9, name: 'Langat arap Bett', age: 33, city: 'Kericho', status: 'Active' },
+        { id: 10, name: 'Makena Kithinji', age: 28, city: 'Meru', status: 'Inactive' },
+        { id: 11, name: 'Leteipa Ole Saitoti', age: 50, city: 'Narok', status: 'Active' },
+        { id: 12, name: 'Atieno Were', age: 26, city: 'Kakamega', status: 'Pending' },
     ];
 
-    const columns = [
+    const columns: Column<typeof kenyanSampleData[0]>[] = [
         { key: 'id', label: 'ID', sortable: true, filterable: true },
         { key: 'name', label: 'Name', sortable: true, filterable: true },
         { key: 'age', label: 'Age', sortable: true, filterable: true },
-        { key: 'email', label: 'Email', sortable: true, filterable: true },
+        { key: 'city', label: 'City', sortable: true, filterable: true },
         {
             key: 'status',
             label: 'Status',
@@ -1271,9 +1015,7 @@ function Demo() {
             filterable: true,
             render: (value: string) => (
                 <span style={{
-                    padding: '0.25rem 0.5rem',
-                    borderRadius: '4px',
-                    fontSize: '0.875rem',
+                    padding: '0.25rem 0.5rem', borderRadius: '4px',
                     backgroundColor: value === 'Active' ? '#d4edda' : value === 'Pending' ? '#fff3cd' : '#f8d7da',
                     color: value === 'Active' ? '#155724' : value === 'Pending' ? '#856404' : '#721c24'
                 }}>
@@ -1283,25 +1025,15 @@ function Demo() {
         },
     ];
 
-    const handleRefresh = () => {
-        console.log('Refreshing data...');
-    };
-
-    const getRowProps = (row: any) => ({
-        onClick: (row: any) => console.log('Clicked row:', row),
-        className: row.status === 'Inactive' ? 'inactive-row' : ''
-    });
-
     return (
         <div style={{ padding: '2rem' }}>
-            <h1>Table Component Demo</h1>
+            <h1>Client-Side Table Demo</h1>
             <Table
-                tableId="demo-table"
-                data={sampleData}
+                tableId="demo-table-kenya"
+                data={kenyanSampleData}
                 columns={columns}
-                onRefresh={handleRefresh}
-                getRowProps={getRowProps}
                 initialPageSize={5}
+                getRowProps={(row) => ({ onClick: () => console.log('Clicked:', row.name) })}
             />
         </div>
     );

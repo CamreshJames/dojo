@@ -1,82 +1,97 @@
 import { createFileRoute, useParams, useNavigate } from '@tanstack/react-router';
-import { useAuth } from '@lib/contexts/AuthContext';
-import { useEffect, useState } from 'react';
-import { createApiClient } from '@lib/utils/api';
+import { useFetch, useMutate } from '@lib/utils/useApiHooks';
 import EditableField from '@lib/components/EditableField';
-
-// Interface for Task data
-interface Task {
-  id: number;
-  subject_id: number;
-  title: string;
-  description: string;
-  requirements: string;
-  due_date: string;
-  max_score: number;
-  is_active: boolean;
-  created_by: number;
-  created_at: string;
-  updated_at: string;
-  created_by_name: string;
-  subject_name?: string;
-}
+import { useState, useCallback, useEffect } from 'react';
+import { type Task } from '@lib/types/types';
 
 function TaskDetail() {
   const { taskId } = useParams({ from: '/_authenticated/tasks/$taskId' });
-  const { getToken } = useAuth();
   const navigate = useNavigate();
-  const [task, setTask] = useState<Task | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  const apiClient = createApiClient(import.meta.env.VITE_HOST_URL);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+  const isValidTaskId = !isNaN(parseInt(taskId));
+
+  const { data, loading, error, refetch } = useFetch<{ task: Task }>(
+    isValidTaskId ? `/admin/tasks/${taskId}` : '',
+    {
+      baseUrl: '/api',
+      token: import.meta.env.VITE_ADMIN_BEARER_TOKEN,
+      skip: !isValidTaskId,
+    }
+  );
+  const task = data?.task;
+
+  const { mutate, error: mutateError, loading: mutateLoading } = useMutate<Task>(
+    `/admin/tasks/${taskId}`,
+    {
+      baseUrl: '/api',
+      token: import.meta.env.VITE_ADMIN_BEARER_TOKEN,
+      defaultMethod: 'PUT',
+    }
+  );
 
   useEffect(() => {
-    const fetchTask = async () => {
-      const token = getToken();
-      if (!token) {
-        setError('No auth token');
-        setLoading(false);
-        return;
-      }
-
-      const response = await apiClient.get(`/admin/tasks/${taskId}`, { token });
-      
-      if (response.success) {
-        setTask(response.data.task);
-      } else {
-        setError(response.error || 'Failed to fetch task');
-      }
-      setLoading(false);
-    };
-    
-    fetchTask();
-  }, [taskId, getToken]);
-
-  // Handle updates to task fields
-  const handleFieldUpdate = (field: keyof Task) => async (value: any): Promise<boolean> => {
-    if (!task) return false;
-    
-    const token = getToken();
-    if (!token) return false;
-
-    // Convert string "true"/"false" to boolean for is_active
-    const patchedValue = field === 'is_active' ? value === 'true' : value;
-
-    const response = await apiClient.put(`/admin/tasks/${taskId}`, 
-      { [field]: patchedValue }, 
-      { token }
-    );
-
-    if (response.success) {
-      setTask(prev => prev ? { ...prev, [field]: patchedValue } : null);
-      return true;
+    if (mutationError) {
+      const timer = setTimeout(() => {
+        setMutationError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
     }
-    
-    return false;
-  };
+  }, [mutationError]);
 
-  // Loading state
+  const handleFieldUpdate = useCallback(
+    (field: keyof Task) => async (value: any): Promise<boolean> => {
+      if (!task || !isValidTaskId) {
+        setMutationError('Invalid task ID or no task data');
+        return false;
+      }
+
+      let patchedValue = value;
+      if (field === 'is_active') {
+        patchedValue = value === 'true';
+      } else if (field === 'max_score') {
+        patchedValue = parseInt(value, 10);
+      } else if (field === 'due_date') {
+        patchedValue = `${value}T00:00:00.000Z`;
+      }
+
+      console.log(`Updating field ${field} with value:`, patchedValue);
+
+      const payload = {
+        subject_id: task.subject_id,
+        title: field === 'title' ? patchedValue : task.title,
+        description: field === 'description' ? patchedValue : task.description,
+        requirements: field === 'requirements' ? patchedValue : task.requirements,
+        due_date: field === 'due_date' ? patchedValue : task.due_date,
+        max_score: field === 'max_score' ? patchedValue : task.max_score,
+        is_active: field === 'is_active' ? patchedValue : task.is_active,
+      };
+
+      const success = await mutate(payload, 'PUT');
+      if (!success) {
+        setMutationError(mutateError || `Failed to update ${field}: Invalid input data`);
+      } else {
+        await refetch();
+      }
+      return success;
+    },
+    [task, isValidTaskId, mutate, mutateError, refetch]
+  );
+
+  if (!isValidTaskId) {
+    return (
+      <div className="error" style={{
+        padding: '1rem',
+        background: '#f8d7da',
+        color: '#721c24',
+        borderRadius: '4px',
+        margin: '1rem',
+        textAlign: 'center',
+      }}>
+        Error: Invalid task ID
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="loading" style={{ textAlign: 'center', padding: '2rem' }}>
@@ -94,7 +109,6 @@ function TaskDetail() {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="error" style={{
@@ -110,7 +124,6 @@ function TaskDetail() {
     );
   }
 
-  // Task not found state
   if (!task) {
     return (
       <div className="not-found" style={{ textAlign: 'center', padding: '2rem' }}>
@@ -119,7 +132,6 @@ function TaskDetail() {
     );
   }
 
-  // Options for is_active select field
   const statusOptions = [
     { value: 'true', label: 'Active' },
     { value: 'false', label: 'Inactive' },
@@ -134,6 +146,31 @@ function TaskDetail() {
       margin: '2rem auto',
       padding: '0 1rem',
     } as React.CSSProperties}>
+      {mutationError && (
+        <div className="mutation-error" style={{
+          padding: '1rem',
+          background: '#f8d7da',
+          color: '#721c24',
+          borderRadius: '4px',
+          margin: '1rem 0',
+          textAlign: 'center',
+          transition: 'opacity 0.5s ease-out',
+        }}>
+          Error updating task: {mutationError}
+        </div>
+      )}
+      {mutateLoading && (
+        <div className="mutation-loading" style={{
+          padding: '1rem',
+          background: '#d4edda',
+          color: '#155724',
+          borderRadius: '4px',
+          margin: '1rem 0',
+          textAlign: 'center',
+        }}>
+          Updating task...
+        </div>
+      )}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -214,7 +251,7 @@ function TaskDetail() {
           <div className="detail-item" style={{ marginBottom: '1rem' }}>
             <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Due Date</h3>
             <EditableField
-              value={task.due_date}
+              value={task.due_date.split('T')[0]}
               onSave={handleFieldUpdate('due_date')}
               type="date"
               validation={(value) => {

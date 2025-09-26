@@ -1,70 +1,84 @@
 import { createFileRoute, useParams, useNavigate } from '@tanstack/react-router';
-import { useAuth } from '@lib/contexts/AuthContext';
-import { useEffect, useState } from 'react';
-import { createApiClient } from '@lib/utils/api';
+import { useFetch, useMutate } from '@lib/utils/useApiHooks';
 import EditableField from '@lib/components/EditableField';
-
-interface Subject {
-  id: number;
-  name: string;
-  description: string;
-  created_by: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  created_by_name: string;
-}
+import { useState, useCallback, useEffect } from 'react';
+import { type Subject } from '@lib/types/types';
 
 function SubjectDetail() {
   const { subjectId } = useParams({ from: '/_authenticated/subjects/$subjectId' });
-  const { getToken } = useAuth();
   const navigate = useNavigate();
-  const [subject, setSubject] = useState<Subject | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  const apiClient = createApiClient(import.meta.env.VITE_HOST_URL);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+  const isValidSubjectId = !isNaN(parseInt(subjectId));
+
+  const { data, loading, error, refetch } = useFetch<{ subject: Subject }>(
+    isValidSubjectId ? `/admin/subjects/${subjectId}` : '',
+    {
+      baseUrl: '/api',
+      token: import.meta.env.VITE_ADMIN_BEARER_TOKEN,
+      skip: !isValidSubjectId,
+    }
+  );
+  const subject = data?.subject;
+
+  const { mutate, error: mutateError, loading: mutateLoading } = useMutate<Subject>(
+    `/admin/subjects/${subjectId}`,
+    {
+      baseUrl: '/api',
+      token: import.meta.env.VITE_ADMIN_BEARER_TOKEN,
+      defaultMethod: 'PUT',
+    }
+  );
 
   useEffect(() => {
-    const fetchSubject = async () => {
-      const token = getToken();
-      if (!token) {
-        setError('No auth token');
-        setLoading(false);
-        return;
-      }
-
-      const response = await apiClient.get(`/admin/subjects/${subjectId}`, { token });
-      
-      if (response.success) {
-        setSubject(response.data.subject);
-      } else {
-        setError(response.error || 'Failed to fetch subject');
-      }
-      setLoading(false);
-    };
-    
-    fetchSubject();
-  }, [subjectId, getToken]);
-
-  const handleFieldUpdate = (field: keyof Subject) => async (value: any): Promise<boolean> => {
-    if (!subject) return false;
-    
-    const token = getToken();
-    if (!token) return false;
-
-    const response = await apiClient.patch(`/admin/subjects/${subjectId}`, 
-      { [field]: value }, 
-      { token }
-    );
-
-    if (response.success) {
-      setSubject(prev => prev ? { ...prev, [field]: value } : null);
-      return true;
+    if (mutationError) {
+      const timer = setTimeout(() => {
+        setMutationError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
     }
-    
-    return false;
-  };
+  }, [mutationError]);
+
+  const handleFieldUpdate = useCallback(
+    (field: keyof Subject) => async (value: any): Promise<boolean> => {
+      if (!subject || !isValidSubjectId) {
+        setMutationError('Invalid subject ID or no subject data');
+        return false;
+      }
+
+      const patchedValue = field === 'is_active' ? value === 'true' : value;
+      console.log(`Updating field ${field} with value:`, patchedValue);
+
+      const payload = {
+        name: field === 'name' ? patchedValue : subject.name,
+        description: field === 'description' ? patchedValue : subject.description,
+        is_active: field === 'is_active' ? patchedValue : subject.is_active,
+      };
+
+      const success = await mutate(payload, 'PUT');
+      if (!success) {
+        setMutationError(mutateError || `Failed to update ${field}: Invalid input data`);
+      } else {
+        await refetch();
+      }
+      return success;
+    },
+    [subject, isValidSubjectId, mutate, mutateError, refetch]
+  );
+
+  if (!isValidSubjectId) {
+    return (
+      <div className="error" style={{
+        padding: '1rem',
+        background: '#f8d7da',
+        color: '#721c24',
+        borderRadius: '4px',
+        margin: '1rem',
+        textAlign: 'center',
+      }}>
+        Error: Invalid subject ID
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -120,6 +134,31 @@ function SubjectDetail() {
       margin: '2rem auto',
       padding: '0 1rem',
     } as React.CSSProperties}>
+      {mutationError && (
+        <div className="mutation-error" style={{
+          padding: '1rem',
+          background: '#f8d7da',
+          color: '#721c24',
+          borderRadius: '4px',
+          margin: '1rem 0',
+          textAlign: 'center',
+          transition: 'opacity 0.5s ease-out',
+        }}>
+          Error updating subject: {mutationError}
+        </div>
+      )}
+      {mutateLoading && (
+        <div className="mutation-loading" style={{
+          padding: '1rem',
+          background: '#d4edda',
+          color: '#155724',
+          borderRadius: '4px',
+          margin: '1rem 0',
+          textAlign: 'center',
+        }}>
+          Updating subject...
+        </div>
+      )}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -160,8 +199,8 @@ function SubjectDetail() {
       }}>
         <div className="status-section" style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <EditableField
-            value={String(subject.is_active)}
-            onSave={(value) => handleFieldUpdate('is_active')(value === 'true')}
+            value={subject.is_active.toString()}
+            onSave={handleFieldUpdate('is_active')}
             type="select"
             options={activeOptions}
           />
@@ -171,7 +210,7 @@ function SubjectDetail() {
           <div className="detail-item" style={{ marginBottom: '1rem' }}>
             <h3 style={{ margin: '0 0 0.5rem', color: 'var(--primary-dark)', fontSize: '1.1rem' }}>Description</h3>
             <EditableField
-              value={subject.description || 'No description'}
+              value={subject.description || ''}
               onSave={handleFieldUpdate('description')}
               type="textarea"
             />

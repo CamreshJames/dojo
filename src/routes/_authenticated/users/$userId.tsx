@@ -185,7 +185,7 @@ function UserDetail() {
           {user.name}'s Profile
         </h1>
         <button
-          onClick={() => navigate({ to: '/admin/' })}
+          onClick={() => navigate({ to: '/users/' })}
           style={{
             padding: '0.5rem 1rem',
             background: 'var(--primary)',
@@ -199,7 +199,7 @@ function UserDetail() {
           onMouseOver={(e) => (e.currentTarget.style.background = 'var(--primary-dark)')}
           onMouseOut={(e) => (e.currentTarget.style.background = 'var(--primary)')}
         >
-          Back to admin/
+          Back to users/
         </button>
       </div>
 

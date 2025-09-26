@@ -20,7 +20,9 @@ import { Route as AuthenticatedUsersIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedTasksIndexRouteImport } from './routes/_authenticated/tasks/index'
 import { Route as AuthenticatedSubjectsIndexRouteImport } from './routes/_authenticated/subjects/index'
 import { Route as AuthenticatedUsersUserIdRouteImport } from './routes/_authenticated/users/$userId'
+import { Route as AuthenticatedTasksCreateRouteImport } from './routes/_authenticated/tasks/create'
 import { Route as AuthenticatedTasksTaskIdRouteImport } from './routes/_authenticated/tasks/$taskId'
+import { Route as AuthenticatedSubjectsCreateRouteImport } from './routes/_authenticated/subjects/create'
 import { Route as AuthenticatedSubjectsSubjectIdRouteImport } from './routes/_authenticated/subjects/$subjectId'
 
 const PublicRoute = PublicRouteImport.update({
@@ -78,10 +80,22 @@ const AuthenticatedUsersUserIdRoute =
     path: '/users/$userId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedTasksCreateRoute =
+  AuthenticatedTasksCreateRouteImport.update({
+    id: '/tasks/create',
+    path: '/tasks/create',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedTasksTaskIdRoute =
   AuthenticatedTasksTaskIdRouteImport.update({
     id: '/tasks/$taskId',
     path: '/tasks/$taskId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSubjectsCreateRoute =
+  AuthenticatedSubjectsCreateRouteImport.update({
+    id: '/subjects/create',
+    path: '/subjects/create',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedSubjectsSubjectIdRoute =
@@ -98,7 +112,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof PublicLoginRoute
   '/register': typeof PublicRegisterRoute
   '/subjects/$subjectId': typeof AuthenticatedSubjectsSubjectIdRoute
+  '/subjects/create': typeof AuthenticatedSubjectsCreateRoute
   '/tasks/$taskId': typeof AuthenticatedTasksTaskIdRoute
+  '/tasks/create': typeof AuthenticatedTasksCreateRoute
   '/users/$userId': typeof AuthenticatedUsersUserIdRoute
   '/subjects': typeof AuthenticatedSubjectsIndexRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
@@ -111,7 +127,9 @@ export interface FileRoutesByTo {
   '/login': typeof PublicLoginRoute
   '/register': typeof PublicRegisterRoute
   '/subjects/$subjectId': typeof AuthenticatedSubjectsSubjectIdRoute
+  '/subjects/create': typeof AuthenticatedSubjectsCreateRoute
   '/tasks/$taskId': typeof AuthenticatedTasksTaskIdRoute
+  '/tasks/create': typeof AuthenticatedTasksCreateRoute
   '/users/$userId': typeof AuthenticatedUsersUserIdRoute
   '/subjects': typeof AuthenticatedSubjectsIndexRoute
   '/tasks': typeof AuthenticatedTasksIndexRoute
@@ -127,7 +145,9 @@ export interface FileRoutesById {
   '/_public/login': typeof PublicLoginRoute
   '/_public/register': typeof PublicRegisterRoute
   '/_authenticated/subjects/$subjectId': typeof AuthenticatedSubjectsSubjectIdRoute
+  '/_authenticated/subjects/create': typeof AuthenticatedSubjectsCreateRoute
   '/_authenticated/tasks/$taskId': typeof AuthenticatedTasksTaskIdRoute
+  '/_authenticated/tasks/create': typeof AuthenticatedTasksCreateRoute
   '/_authenticated/users/$userId': typeof AuthenticatedUsersUserIdRoute
   '/_authenticated/subjects/': typeof AuthenticatedSubjectsIndexRoute
   '/_authenticated/tasks/': typeof AuthenticatedTasksIndexRoute
@@ -142,7 +162,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/subjects/$subjectId'
+    | '/subjects/create'
     | '/tasks/$taskId'
+    | '/tasks/create'
     | '/users/$userId'
     | '/subjects'
     | '/tasks'
@@ -155,7 +177,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/subjects/$subjectId'
+    | '/subjects/create'
     | '/tasks/$taskId'
+    | '/tasks/create'
     | '/users/$userId'
     | '/subjects'
     | '/tasks'
@@ -170,7 +194,9 @@ export interface FileRouteTypes {
     | '/_public/login'
     | '/_public/register'
     | '/_authenticated/subjects/$subjectId'
+    | '/_authenticated/subjects/create'
     | '/_authenticated/tasks/$taskId'
+    | '/_authenticated/tasks/create'
     | '/_authenticated/users/$userId'
     | '/_authenticated/subjects/'
     | '/_authenticated/tasks/'
@@ -262,11 +288,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsersUserIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/tasks/create': {
+      id: '/_authenticated/tasks/create'
+      path: '/tasks/create'
+      fullPath: '/tasks/create'
+      preLoaderRoute: typeof AuthenticatedTasksCreateRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/tasks/$taskId': {
       id: '/_authenticated/tasks/$taskId'
       path: '/tasks/$taskId'
       fullPath: '/tasks/$taskId'
       preLoaderRoute: typeof AuthenticatedTasksTaskIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/subjects/create': {
+      id: '/_authenticated/subjects/create'
+      path: '/subjects/create'
+      fullPath: '/subjects/create'
+      preLoaderRoute: typeof AuthenticatedSubjectsCreateRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/subjects/$subjectId': {
@@ -282,7 +322,9 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedSubjectsSubjectIdRoute: typeof AuthenticatedSubjectsSubjectIdRoute
+  AuthenticatedSubjectsCreateRoute: typeof AuthenticatedSubjectsCreateRoute
   AuthenticatedTasksTaskIdRoute: typeof AuthenticatedTasksTaskIdRoute
+  AuthenticatedTasksCreateRoute: typeof AuthenticatedTasksCreateRoute
   AuthenticatedUsersUserIdRoute: typeof AuthenticatedUsersUserIdRoute
   AuthenticatedSubjectsIndexRoute: typeof AuthenticatedSubjectsIndexRoute
   AuthenticatedTasksIndexRoute: typeof AuthenticatedTasksIndexRoute
@@ -292,7 +334,9 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedSubjectsSubjectIdRoute: AuthenticatedSubjectsSubjectIdRoute,
+  AuthenticatedSubjectsCreateRoute: AuthenticatedSubjectsCreateRoute,
   AuthenticatedTasksTaskIdRoute: AuthenticatedTasksTaskIdRoute,
+  AuthenticatedTasksCreateRoute: AuthenticatedTasksCreateRoute,
   AuthenticatedUsersUserIdRoute: AuthenticatedUsersUserIdRoute,
   AuthenticatedSubjectsIndexRoute: AuthenticatedSubjectsIndexRoute,
   AuthenticatedTasksIndexRoute: AuthenticatedTasksIndexRoute,
